@@ -1,224 +1,110 @@
-PROYECTO COLABORATIVO - 17 SEMANAS
-
-## Descripción
-
-Este repositorio será utilizado durante el desarrollo de un proyecto académico de 17 semanas, realizado de manera colaborativa junto con un compañero.
-
-Durante el curso, iremos desarrollando progresivamente el proyecto y registrando cada avance mediante commits en Git. De esta manera, podremos llevar un control de los cambios realizados, observar la evolución del proyecto y mantener un historial organizado del trabajo realizado por ambos integrantes.
-
-## Objetivo
-
-El objetivo principal es aplicar Git y GitHub/GitLab como herramientas de control de versiones y trabajo colaborativo, realizando commits de manera constante durante las diferentes etapas del proyecto.
-
-## Metodología de trabajo
-
-Durante las 17 semanas:
-
-* Se desarrollará progresivamente el proyecto.
-* Cada avance importante será registrado mediante un commit.
-* Se utilizarán mensajes descriptivos para identificar los cambios realizados.
-* Ambos integrantes participarán en el desarrollo del proyecto.
-* Se mantendrá un historial de versiones para poder consultar los cambios realizados.
-* Se utilizarán ramas cuando sea necesario para trabajar de manera organizada.
-* Al finalizar el curso, se contará con un historial completo de la evolución del proyecto.
-
-## Duración
-
-El proyecto tendrá una duración de 17 semanas.
-
-## Trabajo colaborativo
-
-El proyecto será desarrollado por dos integrantes. Cada integrante realizará aportes al proyecto y registrará sus cambios mediante commits.
-
-El repositorio permitirá observar la participación de ambos integrantes y mantener un registro de las diferentes versiones del proyecto.
-
-## Control de versiones
-
-Git será utilizado para:
-
-* Registrar los cambios realizados.
-* Crear commits.
-* Consultar versiones anteriores.
-* Trabajar de manera colaborativa.
-* Mantener un historial del proyecto.
-* Facilitar la integración de los cambios realizados por ambos integrantes.
-
-## Primer commit
-
-Este archivo README corresponde al inicio del proyecto y representa el primer paso del trabajo colaborativo que se desarrollará durante las 17 semanas.
-
-## Autores
-
-Integrante 1: Valladolid Cruzado Eri Jhampier 
-
-Integrante 2: Rivas Nuñez Jhon Anderson 
-
-Curso: Herraminetas de desarrollo
-
-Docente: correa calle teofilo
-
-
-Duración: 17 semanas.
-
-Durante este periodo se realizarán diferentes actividades relacionadas con el análisis, diseño, desarrollo, pruebas, documentación y presentación del proyecto.
-
-El repositorio será actualizado progresivamente durante todo el curso.
-
-
-## METODOLOGÍA DE TRABAJO
-
----
-
-El proyecto se desarrollará de manera incremental.
-
-Cada semana se realizarán diferentes actividades y avances. Los cambios importantes serán registrados mediante commits para mantener evidencia del progreso.
-
-Proceso general de trabajo:
-
-1. Analizar las actividades de la semana.
-
-2. Definir las tareas que realizará cada integrante.
-
-3. Desarrollar los cambios correspondientes.
-
-4. Probar los cambios realizados.
-
-5. Revisar el trabajo antes de integrarlo.
-
-6. Realizar el commit correspondiente.
-
-7. Subir los cambios al repositorio remoto.
-
-8. Revisar el estado general del proyecto.
-
-9. Continuar con las actividades de la siguiente semana.
-
-10. ORGANIZACIÓN POR SEMANAS
-
----
-
-El proyecto tendrá una evolución progresiva durante las 17 semanas.
-
-Semana 1:
-
-* Configuración inicial del repositorio.
-* Creación de archivos iniciales.
-* Configuración del entorno de trabajo.
-* Primeros commits.
-
-Semana 2:
-
-* Definición del problema.
-* Identificación de requerimientos.
-* Organización inicial del proyecto.
-
-Semana 3:
-
-* Análisis de requerimientos.
-* Definición de funcionalidades principales.
-* Actualización de la documentación.
-
-Semana 4:
-
-* Diseño inicial del sistema.
-* Definición de componentes y estructura.
-
-Semana 5:
-
-* Desarrollo de las primeras funcionalidades.
-* Registro de avances mediante commits.
-
-Semana 6:
-
-* Continuación del desarrollo.
-* Integración de nuevas funcionalidades.
-
-Semana 7:
-
-* Revisión del avance.
-* Corrección de errores.
-* Mejoras al sistema.
-
-Semana 8:
-
-* Desarrollo de funcionalidades adicionales.
-* Integración del trabajo de ambos integrantes.
-
-Semana 9:
-
-* Pruebas iniciales.
-* Identificación y corrección de errores.
-
-Semana 10:
-
-* Mejoras de funcionamiento.
-* Optimización del código y estructura del proyecto.
-
-Semana 11:
-
-* Implementación de nuevas funcionalidades.
-* Actualización de la documentación.
-
-Semana 12:
-
-* Integración general del sistema.
-* Revisión de funcionalidades.
-
-Semana 13:
-
-* Pruebas completas.
-* Corrección de errores encontrados.
-
-Semana 14:
-
-* Mejoras finales.
-* Optimización y organización del proyecto.
-
-Semana 15:
-
-* Preparación de la versión final.
-* Revisión general del sistema.
-
-Semana 16:
-
-* Documentación final.
-* Pruebas finales.
-* Corrección de detalles pendientes.
-
-Semana 17:
-
-* Entrega de la versión final.
-* Presentación del proyecto.
-* Revisión del historial de commits.
-* Cierre del desarrollo.
-
-## CONTROL DE VERSIONES
-
----
-
-Git será utilizado para registrar todos los cambios importantes realizados durante el desarrollo.
-
-Los principales comandos utilizados serán:
-
-```
-git init
-git status
-git add
-git commit
-git log
-git branch
-git switch
-git merge
-git pull
-git push
+# AGENTS.md — Resiste (app de seguimiento de entrenamiento personal)
+
+## Contexto del proyecto
+
+Proyecto para el curso de Herramientas de Desarrollo (UTP), evaluado principalmente por el uso correcto de Git/commits. Se desarrolla en pareja durante 17-18 semanas, con avance real de ambos integrantes cada semana.
+
+Problema real que resuelve: ayudar a alguien que arranca en nivel principiante a llegar a una meta de resistencia física (ej. correr) en un plazo definido, registrando sesiones de entrenamiento y viendo su progreso real contra el objetivo. No es un tracker de fitness genérico con mil funciones — es una sola cosa hecha bien.
+
+## Stack
+
+- Frontend: Angular (standalone components, sin NgModules, usar signals)
+- Sin backend propio — conexión directa a Supabase (Postgres + Auth) vía `@supabase/supabase-js`
+- Estilos: a definir por el equipo (Tailwind o Bootstrap)
+- Deploy: Vercel o Netlify
+
+## Modelo de datos (Supabase)
+
+```sql
+create table usuarios (
+  id uuid references auth.users primary key,
+  nombre text not null,
+  rol text default 'usuario',
+  created_at timestamp default now()
+);
+
+create table metas (
+  id uuid default gen_random_uuid() primary key,
+  usuario_id uuid references usuarios(id) not null,
+  nivel_inicial text not null,
+  tipo_resistencia text not null,
+  plazo_semanas int not null,
+  horas_objetivo_semanales numeric not null,
+  fecha_inicio date default current_date
+);
+
+create table tipos_actividad (
+  id uuid default gen_random_uuid() primary key,
+  nombre text not null unique
+);
+
+create table sesiones (
+  id uuid default gen_random_uuid() primary key,
+  usuario_id uuid references usuarios(id) not null,
+  tipo_actividad_id uuid references tipos_actividad(id) not null,
+  fecha date not null,
+  duracion_min int not null,
+  esfuerzo_percibido int check (esfuerzo_percibido between 1 and 10),
+  notas text
+);
 ```
 
-Estos comandos permitirán administrar las diferentes versiones del proyecto y facilitar el trabajo colaborativo.
+## Estructura de carpetas
 
-Este repositorio será utilizado como evidencia del desarrollo progresivo y colaborativo del proyecto durante las 17 semanas.
+```
+src/app/
+├── core/            # cliente Supabase, guards, interceptors
+├── shared/          # componentes reutilizables
+├── features/
+│   ├── auth/
+│   ├── metas/
+│   ├── tipos-actividad/
+│   ├── sesiones/
+│   └── dashboard/
+└── app.routes.ts
+```
 
-El uso de Git permitirá aplicar buenas prácticas de control de versiones, organización del código y colaboración entre los integrantes.
+## División del equipo
 
-El objetivo final será no solamente obtener un proyecto funcional, sino también demostrar un proceso de desarrollo ordenado, documentado y respaldado mediante un historial de commits.
+- Persona A: `auth` + `metas`
+- Persona B: `tipos-actividad` + `sesiones` + `dashboard`
+- Cada quien trabaja solo dentro de su carpeta de módulo para minimizar conflictos de merge. Antes de tocar el módulo del otro, avisar.
 
+## Flujo de Git (esto es lo que califica el curso)
 
+- `main` protegida — solo entra código que funciona
+- Una rama por feature: `feature/auth`, `feature/metas`, `feature/tipos-actividad`, `feature/sesiones`, `feature/dashboard`
+- Commits con formato convencional: `feat:`, `fix:`, `docs:`, `test:`, `chore:`
+- Cada commit referencia su issue de GitHub Projects, ej: `feat: login con Supabase (#12)`
+- Merge por Pull Request, aunque el equipo sea de 2 personas — deja historial de revisión
+- Mínimo un commit real por semana por persona — nunca acumular todo para el final
+- Tag/release cada 3-4 semanas como hito
+
+## Roadmap semana por semana
+
+_(Ajustado: el proyecto arranca recién en la semana 4 — semanas 1-3 sin avance. Roadmap original comprimido para que quepa en las semanas restantes; Docker queda fuera salvo que el curso lo pida explícitamente.)_
+
+| Sem | Persona A (Auth + Metas)                                                              | Persona B (Sesiones + Dashboard)                     |
+| --- | ------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| 4   | Setup conjunto: scaffold Angular, carpetas, tablas en Supabase, cada uno crea su rama | (mismo, en conjunto)                                 |
+| 5   | AuthService + Login/Registro                                                          | CRUD `tipos_actividad` + formulario registrar sesión |
+| 6   | Guard de rutas + formulario "Mi Meta" (crear)                                         | Historial de sesiones (listar + filtrar)             |
+| 7   | Editar meta + mini resumen de perfil                                                  | Editar/eliminar sesión                               |
+| 8   | Exponer `metas` para el dashboard + validaciones                                      | Dashboard: horas acumuladas vs meta + racha          |
+| 9   | Refinar UI + responsive                                                               | Dashboard: tendencia de esfuerzo + responsive        |
+| 10  | Tests unitarios: auth, metas                                                          | Tests unitarios: sesiones, dashboard                 |
+| 11  | Tests de integración + accesibilidad                                                  | Tests de integración + accesibilidad                 |
+| 12  | CI con GitHub Actions (lint + test en cada push)                                      | (mismo, en conjunto)                                 |
+| 13  | README + documentación técnica                                                        | Manual de usuario / capturas                         |
+| 14  | Corrección de bugs, pulido general                                                    | Corrección de bugs, pulido general                   |
+| 15  | Deploy a producción (Vercel/Netlify)                                                  | Deploy a producción (Vercel/Netlify)                 |
+| 16  | Buffer / ajustes finales, revisión cruzada                                            | Buffer / ajustes finales, revisión cruzada           |
+| 17  | Preparación de demo y entrega final                                                   | Preparación de demo y entrega final                  |
+| 18  | Margen extra por si algo se atrasa                                                    | Margen extra por si algo se atrasa                   |
+
+## Reglas para el agente
+
+- No generar código de golpe para varias semanas de una vez; avanzar módulo por módulo, semana por semana, siguiendo el roadmap
+- Cada tarea completada debe terminar en un commit real — no dejar cambios sin commitear
+- Respetar la convención de nombres ya establecida (usuarios, metas, sesiones, tipos_actividad)
+- No tocar el módulo asignado a la otra persona sin avisar primero
