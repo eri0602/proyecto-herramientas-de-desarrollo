@@ -2,6 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { SesionesService } from '../../core/services/sesiones.service';
+import { Sesion } from '../../core/models/sesion.model';
 
 interface WorkoutTip {
   icon: string;
@@ -28,6 +30,7 @@ interface FeatureCard {
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
+  private sesionesService = inject(SesionesService);
   private router = inject(Router);
 
   readonly profile = this.authService.currentProfile;
@@ -50,7 +53,71 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return profile?.nombre?.split(' ')[0] || 'Atleta';
   });
 
-  readonly weekProgress = signal(0);
+  // Sesiones reales del usuario
+  userSessions = signal<Sesion[]>([]);
+  targetWeeklyMinutes = signal(240); // 4 horas objetivo semanal base
+
+  readonly totalSessions = computed(() => this.userSessions().length);
+
+  readonly weeklyMinutes = computed(() => {
+    const sessions = this.userSessions();
+    if (sessions.length === 0) return 0;
+
+    const now = new Date();
+    // Obtener el inicio de la semana (Lunes)
+    const day = now.getDay();
+    const diff = (day === 0 ? -6 : 1) - day;
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() + diff);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    return sessions
+      .filter(s => new Date(s.fecha + 'T00:00:00').getTime() >= startOfWeek.getTime())
+      .reduce((sum, s) => sum + (s.duracion_min || 0), 0);
+  });
+
+  readonly totalMinutes = computed(() => {
+    return this.userSessions().reduce((sum, s) => sum + (s.duracion_min || 0), 0);
+  });
+
+  readonly streakDays = computed(() => {
+    const sessions = this.userSessions();
+    if (sessions.length === 0) return 0;
+
+    const dates = Array.from(new Set(sessions.map(s => s.fecha))).sort().reverse();
+    let streak = 0;
+    const todayStr = new Date().toISOString().split('T')[0];
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+    // Verificar si entrenó hoy o ayer
+    if (dates[0] !== todayStr && dates[0] !== yesterdayStr) {
+      return 0;
+    }
+
+    let checkDate = new Date(dates[0] + 'T00:00:00');
+    for (const dStr of dates) {
+      const d = new Date(dStr + 'T00:00:00');
+      const diffDays = Math.round((checkDate.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+      if (diffDays <= 1) {
+        streak++;
+        checkDate = d;
+      } else {
+        break;
+      }
+    }
+    return streak;
+  });
+
+  readonly weekProgress = computed(() => {
+    const target = this.targetWeeklyMinutes();
+    const current = this.weeklyMinutes();
+    if (target <= 0) return 0;
+    const pct = Math.round((current / target) * 100);
+    return Math.min(pct, 100);
+  });
+
   readonly progressColor = computed(() => {
     const p = this.weekProgress();
     if (p === 0) return '#64748b'; // Gris
@@ -76,14 +143,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
     {
       id: 1,
       title: '¡Hora de entrenar! 💪',
-      body: 'Recuerda: Tu sesión de Core & Flexibilidad te espera hoy.',
+      body: 'Recuerda: Tu sesión de resistencia física te espera hoy.',
       time: 'Hace 5 min',
       read: false
     },
     {
       id: 2,
-      title: 'Progreso Semanal (42%) ⚡',
-      body: '¡Buen ritmo! Llevas 185 minutos acumulados.',
+      title: 'Progreso Semanal ⚡',
+      body: '¡Buen ritmo! Sigue sumando minutos hacia tu meta.',
       time: 'Hace 2 horas',
       read: false
     },
@@ -99,14 +166,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   readonly unreadCount = computed(() => {
     return this.notificationHistory().filter(n => !n.read).length;
   });
-  readonly totalMinutes = signal(0);
-  readonly streakDays = signal(0);
-  readonly totalSessions = signal(0);
 
   readonly quotes = [
     '"El dolor de hoy es la fuerza de mañana." — Arnold Schwarzenegger',
     '"No pares cuando estés cansado. Para cuando hayas terminado."',
-    '"Cada rep. te acerca a tu mejor versión."',
+    '"Cada rep. y cada kilómetro te acerca a tu mejor versión."',
     '"La disciplina es elegir entre lo que quieres ahora y lo que quieres más."',
     '"Tu único límite eres tú mismo."',
   ];
@@ -130,11 +194,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
     {
       icon: 'bi-graph-up-arrow',
       title: 'Progresión',
-      body: 'Aumenta intensidad gradualmente: más reps, más peso o menos descanso semana a semana.',
+      body: 'Aumenta intensidad gradualmente: más tiempo, más ritmo o menos descanso semana a semana.',
     },
   ];
 
-  readonly features: FeatureCard[] = [
+  readonly features = computed<FeatureCard[]>(() => [
     {
       icon: 'bi-play-circle-fill',
       iconColor: '#38bdf8',
@@ -142,7 +206,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       title: 'Registrar Sesión',
       description: 'Registra cada entrenamiento: tipo de actividad, duración y nivel de esfuerzo percibido.',
       route: '/sesiones',
-      stats: '0 sesiones esta semana',
+      stats: `${this.userSessions().length} sesiones registradas`,
     },
     {
       icon: 'bi-trophy-fill',
@@ -151,14 +215,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
       title: 'Mis Metas',
       description: 'Define objetivos semanales o mensuales y monitorea tu progreso en tiempo real.',
       route: '/metas',
-      stats: '0 metas activas',
+      stats: 'Meta activa semanal',
     },
     {
       icon: 'bi-activity',
       iconColor: '#a78bfa',
       badge: 'Actividades',
       title: 'Tipos de Actividad',
-      description: 'Configura tus tipos de ejercicio favoritos: cardio, fuerza, yoga, HIIT y más.',
+      description: 'Configura tus disciplinas favoritas: carrera, ciclismo, natación, HIIT y más.',
       route: '/tipos-actividad',
     },
     {
@@ -168,10 +232,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
       title: 'Mi Progreso',
       description: 'Visualiza tu historial de entrenamientos, racha de días activos y minutos acumulados.',
       route: '/sesiones',
+      stats: `${this.totalMinutes()} min totales`,
     },
-  ];
+  ]);
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     if (!this.isAuthenticated()) {
       this.router.navigate(['/login']);
       return;
@@ -181,6 +246,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.clockInterval = setInterval(() => this.updateGreetingAndTime(), 60000);
     this.motivationalQuote.set(this.quotes[Math.floor(Math.random() * this.quotes.length)]);
 
+    // Cargar sesiones reales del usuario
+    await this.loadSessionsData();
+
     // Detect new user (no sessions logged yet)
     const hasSeenOnboarding = localStorage.getItem('resiste_onboarding_seen');
     if (!hasSeenOnboarding) {
@@ -189,15 +257,21 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     // Animate stats on load
     this.statAnimTimeout = setTimeout(() => {
-      this.weekProgress.set(42);
-      this.totalMinutes.set(185);
-      this.streakDays.set(3);
-      this.totalSessions.set(7);
       this.animatedStats.set(true);
-
-      // Mostrar notificación de motivación
-      this.showNotification('¡Es hora de entrenar! Recuerda: "El éxito es la suma de pequeños esfuerzos repetidos día tras día."', 'motivational');
+      this.showNotification('¡Bienvenido a tu panel de entrenamiento! "El éxito es la suma de pequeños esfuerzos diarios."', 'motivational');
     }, 300);
+  }
+
+  private async loadSessionsData(): Promise<void> {
+    const user = this.authService.currentUser();
+    const userId = user?.id || 'demo_user';
+
+    try {
+      const data = await this.sesionesService.getSesiones(userId);
+      this.userSessions.set(data);
+    } catch (err) {
+      console.warn('No se pudieron cargar las sesiones para el dashboard:', err);
+    }
   }
 
   showNotification(text: string, type: 'motivational' | 'info'): void {
@@ -248,10 +322,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   setProgress(val: number): void {
-    this.weekProgress.set(val);
+    this.targetWeeklyMinutes.set(Math.round((this.weeklyMinutes() / (val || 1)) * 100) || 240);
     const color = this.progressColor();
     const status = this.progressStatus();
-    this.showNotification(`Progreso actualizado al ${val}% — Estado: ${status}`, 'info');
+    this.showNotification(`Progreso calculado: ${this.weekProgress()}% — Estado: ${status}`, 'info');
   }
 
   async logout(): Promise<void> {

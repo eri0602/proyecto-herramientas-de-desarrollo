@@ -192,7 +192,7 @@
         <p class="section-sub">Todo lo que necesitas para entrenar desde casa</p>
       </div>
       <div class="features-grid">
-        @for (feat of features; track feat.title) {
+        @for (feat of features(); track feat.title) {
         <div class="feature-card" (mouseenter)="setTooltip(feat.title)" (mouseleave)="setTooltip(null)" [routerLink]="feat.route">
           <div class="feat-badge">{{ feat.badge }}</div>
           <div class="feat-icon" [style.color]="feat.iconColor">

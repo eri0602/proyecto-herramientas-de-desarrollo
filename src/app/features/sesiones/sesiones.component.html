@@ -1,0 +1,374 @@
+<div class="sesiones-page">
+  <!-- Page Header -->
+  <header class="page-header">
+    <div class="header-container">
+      <div class="header-nav">
+        <a routerLink="/dashboard" class="back-link">
+          <i class="bi bi-arrow-left"></i> Volver al Dashboard
+        </a>
+      </div>
+      <div class="header-title-row">
+        <div>
+          <span class="badge-tag"><i class="bi bi-stopwatch-fill"></i> Registro & Historial</span>
+          <h1 class="page-title">Sesiones de Entrenamiento</h1>
+          <p class="page-subtitle">
+            Registra cada entrenamiento diario, consulta tu historial filtrable y monitorea tus esfuerzos.
+          </p>
+        </div>
+        <div class="header-actions">
+          <a routerLink="/tipos-actividad" class="btn-secondary-link">
+            <i class="bi bi-tags-fill"></i> Tipos de Actividad
+          </a>
+          <a routerLink="/metas" class="btn-secondary-link gold">
+            <i class="bi bi-trophy-fill"></i> Mis Metas
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-main container">
+    <!-- Feedback Alerts -->
+    @if (successMessage()) {
+      <div class="alert alert-success animate-fade">
+        <i class="bi bi-check-circle-fill"></i>
+        <span>{{ successMessage() }}</span>
+      </div>
+    }
+
+    @if (errorMessage()) {
+      <div class="alert alert-error animate-fade">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    }
+
+    <!-- Quick Stats Cards (Semana 6 / 8) -->
+    <div class="stats-overview-grid">
+      <div class="mini-stat-card">
+        <div class="stat-icon-wrap cyan">
+          <i class="bi bi-lightning-charge-fill"></i>
+        </div>
+        <div class="stat-details">
+          <span class="stat-label">Sesiones Totales</span>
+          <span class="stat-value">{{ sesiones().length }}</span>
+        </div>
+      </div>
+
+      <div class="mini-stat-card">
+        <div class="stat-icon-wrap gold">
+          <i class="bi bi-clock-history"></i>
+        </div>
+        <div class="stat-details">
+          <span class="stat-label">Minutos Acumulados</span>
+          <span class="stat-value">{{ totalMinutosFiltrados() }} min</span>
+        </div>
+      </div>
+
+      <div class="mini-stat-card">
+        <div class="stat-icon-wrap green">
+          <i class="bi bi-fire"></i>
+        </div>
+        <div class="stat-details">
+          <span class="stat-label">Esfuerzo Promedio</span>
+          <span class="stat-value">{{ promedioEsfuerzo() }} / 10</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="main-layout-grid">
+      <!-- Formulario: Registrar / Editar Sesión (Semana 5 y 7) -->
+      <section class="card form-card">
+        <div class="card-header">
+          <div class="icon-bubble" [class.edit-mode]="isEditing()">
+            <i [class]="isEditing() ? 'bi bi-pencil-square' : 'bi bi-plus-circle-fill'"></i>
+          </div>
+          <div>
+            <h2 class="card-title">
+              {{ isEditing() ? 'Editar Sesión' : 'Registrar Nueva Sesión' }}
+            </h2>
+            <p class="card-subtitle">
+              {{ isEditing() ? 'Modifica los datos del entrenamiento' : 'Ingresa los detalles de tu actividad física' }}
+            </p>
+          </div>
+        </div>
+
+        <form (ngSubmit)="onSubmitForm()" class="form-body">
+          <!-- Tipo de Actividad -->
+          <div class="form-group">
+            <label for="tipoActividad" class="form-label">Tipo de Actividad *</label>
+            <div class="select-wrap">
+              <i class="bi bi-activity select-icon"></i>
+              <select
+                id="tipoActividad"
+                class="form-control"
+                [ngModel]="formTipoActividadId()"
+                (ngModelChange)="formTipoActividadId.set($event)"
+                name="formTipoActividadId"
+                required
+              >
+                @if (tipos().length === 0) {
+                  <option value="" disabled>No hay actividades disponibles</option>
+                }
+                @for (tipo of tipos(); track tipo.id) {
+                  <option [value]="tipo.id">{{ tipo.nombre }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <!-- Fecha y Duración -->
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="fechaSesion" class="form-label">Fecha *</label>
+              <div class="input-icon-wrap">
+                <i class="bi bi-calendar3"></i>
+                <input
+                  id="fechaSesion"
+                  type="date"
+                  class="form-control"
+                  [ngModel]="formFecha()"
+                  (ngModelChange)="formFecha.set($event)"
+                  name="formFecha"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="duracionMin" class="form-label">Duración (minutos) *</label>
+              <div class="input-icon-wrap">
+                <i class="bi bi-stopwatch"></i>
+                <input
+                  id="duracionMin"
+                  type="number"
+                  min="1"
+                  max="1440"
+                  class="form-control"
+                  [ngModel]="formDuracionMin()"
+                  (ngModelChange)="formDuracionMin.set($event)"
+                  name="formDuracionMin"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Esfuerzo Percibido (1 - 10) -->
+          <div class="form-group">
+            <div class="slider-header">
+              <label for="esfuerzo" class="form-label">
+                Esfuerzo Percibido (RPE 1-10) *
+              </label>
+              <span
+                class="effort-badge"
+                [style.background-color]="getEffortLabel(formEsfuerzo()).color + '25'"
+                [style.color]="getEffortLabel(formEsfuerzo()).color"
+                [style.border-color]="getEffortLabel(formEsfuerzo()).color"
+              >
+                {{ formEsfuerzo() }} / 10 — {{ getEffortLabel(formEsfuerzo()).label }}
+              </span>
+            </div>
+
+            <input
+              id="esfuerzo"
+              type="range"
+              min="1"
+              max="10"
+              step="1"
+              class="effort-range-slider"
+              [ngModel]="formEsfuerzo()"
+              (ngModelChange)="formEsfuerzo.set($event)"
+              name="formEsfuerzo"
+            />
+            <div class="slider-ticks">
+              <span>1 (Muy suave)</span>
+              <span>5 (Moderado)</span>
+              <span>10 (Máximo)</span>
+            </div>
+          </div>
+
+          <!-- Notas -->
+          <div class="form-group">
+            <label for="notas" class="form-label">Notas / Sensaciones (Opcional)</label>
+            <textarea
+              id="notas"
+              class="form-control textarea"
+              rows="3"
+              placeholder="Ej. Buenas sensaciones en cuestas, hidratación adecuada..."
+              [ngModel]="formNotas()"
+              (ngModelChange)="formNotas.set($event)"
+              name="formNotas"
+              maxlength="300"
+            ></textarea>
+          </div>
+
+          <div class="form-actions">
+            <button
+              type="submit"
+              class="btn-submit-session"
+              [disabled]="saving() || !formTipoActividadId()"
+            >
+              @if (saving()) {
+                <i class="bi bi-arrow-repeat spin"></i> Guardando...
+              } @else {
+                <i [class]="isEditing() ? 'bi bi-check-lg' : 'bi bi-plus-lg'"></i>
+                {{ isEditing() ? 'Guardar Cambios' : 'Registrar Sesión' }}
+              }
+            </button>
+
+            @if (isEditing()) {
+              <button
+                type="button"
+                class="btn-cancel"
+                (click)="cancelEdit()"
+              >
+                Cancelar
+              </button>
+            }
+          </div>
+        </form>
+      </section>
+
+      <!-- Historial de Sesiones (Semana 6 + 7) -->
+      <section class="card history-card">
+        <div class="history-header">
+          <div>
+            <h2 class="card-title">Historial de Sesiones</h2>
+            <p class="card-subtitle">
+              Mostrando {{ filteredSesiones().length }} de {{ sesiones().length }} registros
+            </p>
+          </div>
+
+          <button class="btn-refresh" (click)="cargarDatos()" [disabled]="loading()" title="Recargar">
+            <i class="bi bi-arrow-clockwise" [class.spin]="loading()"></i>
+          </button>
+        </div>
+
+        <!-- Barra de Filtros (Semana 6) -->
+        <div class="filters-bar">
+          <div class="filter-item">
+            <label class="filter-label"><i class="bi bi-filter"></i> Disciplina</label>
+            <select
+              class="filter-select"
+              [ngModel]="filterTipoId()"
+              (ngModelChange)="filterTipoId.set($event)"
+            >
+              <option value="TODOS">Todas las actividades</option>
+              @for (tipo of tipos(); track tipo.id) {
+                <option [value]="tipo.id">{{ tipo.nombre }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="filter-item search-filter">
+            <label class="filter-label"><i class="bi bi-search"></i> Buscar</label>
+            <input
+              type="text"
+              class="filter-input"
+              placeholder="Buscar en notas..."
+              [ngModel]="filterSearch()"
+              (ngModelChange)="filterSearch.set($event)"
+            />
+          </div>
+
+          <div class="filter-item">
+            <label class="filter-label"><i class="bi bi-sort-down"></i> Ordenar</label>
+            <select
+              class="filter-select"
+              [ngModel]="filterOrderBy()"
+              (ngModelChange)="filterOrderBy.set($event)"
+            >
+              <option value="reciente">Más recientes</option>
+              <option value="duracion">Mayor duración</option>
+              <option value="esfuerzo">Mayor esfuerzo</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Lista / Tarjetas de Sesiones -->
+        @if (loading() && sesiones().length === 0) {
+          <div class="loading-state">
+            <i class="bi bi-arrow-repeat spin loading-icon"></i>
+            <p>Cargando historial de entrenamientos...</p>
+          </div>
+        } @else if (filteredSesiones().length === 0) {
+          <div class="empty-state">
+            <i class="bi bi-calendar-x empty-icon"></i>
+            <p class="empty-text">No se encontraron sesiones registradas</p>
+            <p class="empty-sub">
+              {{ sesiones().length === 0 ? 'Registra tu primera sesión en el formulario.' : 'Prueba cambiando los filtros de búsqueda.' }}
+            </p>
+          </div>
+        } @else {
+          <div class="sessions-list">
+            @for (sesion of filteredSesiones(); track sesion.id) {
+              <div class="session-card">
+                <div class="session-top">
+                  <div class="session-activity">
+                    <div class="activity-circle">
+                      <i class="bi bi-activity"></i>
+                    </div>
+                    <div>
+                      <h3 class="session-type-name">
+                        {{ sesion.tipos_actividad?.nombre || 'Entrenamiento' }}
+                      </h3>
+                      <span class="session-date">
+                        <i class="bi bi-calendar-event"></i> {{ sesion.fecha | date:'fullDate':'':'es-MX' }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="session-metrics-pills">
+                    <div class="metric-pill duration">
+                      <i class="bi bi-stopwatch"></i> {{ sesion.duracion_min }} min
+                    </div>
+                    <div
+                      class="metric-pill effort"
+                      [style.color]="getEffortLabel(sesion.esfuerzo_percibido).color"
+                      [style.background]="getEffortLabel(sesion.esfuerzo_percibido).color + '18'"
+                    >
+                      <i class="bi bi-fire"></i> RPE {{ sesion.esfuerzo_percibido }}/10
+                    </div>
+                  </div>
+                </div>
+
+                @if (sesion.notas) {
+                  <p class="session-notes">
+                    <i class="bi bi-chat-left-text"></i> "{{ sesion.notas }}"
+                  </p>
+                }
+
+                <div class="session-footer">
+                  <span class="effort-desc">
+                    Intensidad: <strong>{{ getEffortLabel(sesion.esfuerzo_percibido).label }}</strong>
+                  </span>
+
+                  <!-- Botones de Acción (Semana 7: Editar / Eliminar) -->
+                  <div class="session-actions">
+                    <button
+                      type="button"
+                      class="btn-icon edit"
+                      (click)="startEdit(sesion)"
+                      title="Editar sesión"
+                    >
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-icon delete"
+                      (click)="deleteSesion(sesion.id)"
+                      title="Eliminar sesión"
+                    >
+                      <i class="bi bi-trash3"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </section>
+    </div>
+  </main>
+</div>

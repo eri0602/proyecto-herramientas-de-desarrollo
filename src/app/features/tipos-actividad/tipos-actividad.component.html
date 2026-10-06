@@ -1,0 +1,158 @@
+<div class="tipos-page">
+  <!-- Header -->
+  <header class="page-header">
+    <div class="header-container">
+      <div class="header-nav">
+        <a routerLink="/dashboard" class="back-link">
+          <i class="bi bi-arrow-left"></i> Volver al Dashboard
+        </a>
+      </div>
+      <div class="header-title-row">
+        <div>
+          <span class="badge-tag"><i class="bi bi-tags-fill"></i> Configuración</span>
+          <h1 class="page-title">Tipos de Actividad</h1>
+          <p class="page-subtitle">
+            Administra las disciplinas y modalidades de entrenamiento disponibles para registrar tus sesiones.
+          </p>
+        </div>
+        <a routerLink="/sesiones" class="btn-action-primary">
+          <i class="bi bi-play-circle-fill"></i> Ir a Sesiones
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Content Container -->
+  <main class="page-main container">
+    <!-- Feedback Alerts -->
+    @if (successMessage()) {
+      <div class="alert alert-success animate-fade">
+        <i class="bi bi-check-circle-fill"></i>
+        <span>{{ successMessage() }}</span>
+      </div>
+    }
+
+    @if (errorMessage()) {
+      <div class="alert alert-error animate-fade">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    }
+
+    <div class="grid-layout">
+      <!-- Formulario para agregar tipo -->
+      <section class="card form-card">
+        <div class="card-header">
+          <div class="icon-bubble">
+            <i class="bi bi-plus-circle-fill"></i>
+          </div>
+          <div>
+            <h2 class="card-title">Nuevo Tipo de Actividad</h2>
+            <p class="card-subtitle">Añade una nueva disciplina a tu catálogo</p>
+          </div>
+        </div>
+
+        <form (ngSubmit)="agregarTipo()" class="form-body">
+          <div class="form-group">
+            <label for="nombreActividad" class="form-label">Nombre de la Actividad</label>
+            <div class="input-icon-wrap">
+              <i class="bi bi-activity"></i>
+              <input
+                id="nombreActividad"
+                type="text"
+                class="form-control"
+                placeholder="Ej. Trote al aire libre, Natación fondo, CrossFit..."
+                [ngModel]="nuevoNombre()"
+                (ngModelChange)="nuevoNombre.set($event)"
+                name="nuevoNombre"
+                required
+                maxlength="50"
+              />
+            </div>
+            <span class="input-hint">Procura usar nombres claros para identificar fácilmente tu sesión.</span>
+          </div>
+
+          <button
+            type="submit"
+            class="btn-submit"
+            [disabled]="saving() || !nuevoNombre().trim()"
+          >
+            @if (saving()) {
+              <i class="bi bi-arrow-repeat spin"></i> Guardando...
+            } @else {
+              <i class="bi bi-check2-circle"></i> Agregar Actividad
+            }
+          </button>
+        </form>
+
+        <div class="suggestions-box">
+          <span class="sugg-title"><i class="bi bi-lightbulb-fill"></i> Sugerencias populares:</span>
+          <div class="sugg-tags">
+            <button type="button" class="tag-btn" (click)="nuevoNombre.set('Carrera 5K/10K')">+ Carrera 5K/10K</button>
+            <button type="button" class="tag-btn" (click)="nuevoNombre.set('Ciclismo en ruta')">+ Ciclismo</button>
+            <button type="button" class="tag-btn" (click)="nuevoNombre.set('Natación crol')">+ Natación</button>
+            <button type="button" class="tag-btn" (click)="nuevoNombre.set('Intervalos HIIT')">+ HIIT</button>
+            <button type="button" class="tag-btn" (click)="nuevoNombre.set('Fuerza tren inferior')">+ Fuerza</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Lista de Tipos de Actividad -->
+      <section class="card list-card">
+        <div class="card-header list-header-flex">
+          <div class="flex-title">
+            <div class="icon-bubble purple">
+              <i class="bi bi-collection-fill"></i>
+            </div>
+            <div>
+              <h2 class="card-title">Actividades Disponibles</h2>
+              <p class="card-subtitle">{{ tipos().length }} disciplinas configuradas</p>
+            </div>
+          </div>
+          <button class="btn-refresh" (click)="cargarTipos()" [disabled]="loading()" title="Recargar">
+            <i class="bi bi-arrow-clockwise" [class.spin]="loading()"></i>
+          </button>
+        </div>
+
+        @if (loading() && tipos().length === 0) {
+          <div class="loading-state">
+            <i class="bi bi-arrow-repeat spin loading-icon"></i>
+            <p>Cargando catálogo de actividades...</p>
+          </div>
+        } @else if (tipos().length === 0) {
+          <div class="empty-state">
+            <i class="bi bi-inbox-fill empty-icon"></i>
+            <p class="empty-text">No hay tipos de actividad registrados todavía.</p>
+            <p class="empty-sub">Crea la primera utilizando el formulario de la izquierda.</p>
+          </div>
+        } @else {
+          <div class="activities-grid">
+            @for (tipo of tipos(); track tipo.id || tipo.nombre) {
+              <div class="activity-item-card">
+                <div class="item-left">
+                  <div class="activity-avatar">
+                    <i [class]="'bi ' + getIcon(tipo.nombre)"></i>
+                  </div>
+                  <div class="item-info">
+                    <h3 class="activity-name">{{ tipo.nombre }}</h3>
+                    <span class="activity-badge">Disponible para sesiones</span>
+                  </div>
+                </div>
+                <div class="item-actions">
+                  <button
+                    type="button"
+                    class="btn-delete"
+                    (click)="eliminarTipo(tipo.id, tipo.nombre)"
+                    title="Eliminar actividad"
+                  >
+                    <i class="bi bi-trash3"></i>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </section>
+    </div>
+  </main>
+</div>
