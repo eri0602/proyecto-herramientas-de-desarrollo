@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -11,7 +11,7 @@ import { AuthService } from '../../../core/services/auth.service';
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.css']
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
 
@@ -21,6 +21,12 @@ export class RegisterComponent {
   loading = signal(false);
   errorMessage = signal<string | null>(null);
   successMessage = signal<string | null>(null);
+
+  ngOnInit(): void {
+    if (this.authService.isAuthenticated()) {
+      this.router.navigate(['/dashboard']);
+    }
+  }
 
   async onSubmit() {
     if (!this.nombre() || !this.email() || !this.password()) {
@@ -39,10 +45,10 @@ export class RegisterComponent {
 
     try {
       await this.authService.signUp(this.email(), this.password(), this.nombre());
-      this.successMessage.set('Registro exitoso. Redirigiendo...');
+      this.successMessage.set('¡Cuenta creada! Redirigiendo al dashboard...');
       setTimeout(() => {
-        this.router.navigate(['/login']);
-      }, 1500);
+        this.router.navigate(['/dashboard']);
+      }, 1200);
     } catch (err: any) {
       this.errorMessage.set(err.message || 'Error al registrar usuario.');
     } finally {
@@ -50,3 +56,4 @@ export class RegisterComponent {
     }
   }
 }
+

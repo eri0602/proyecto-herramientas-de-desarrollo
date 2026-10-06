@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -11,7 +11,7 @@ import { AuthService } from '../../../core/services/auth.service';
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
 
@@ -19,6 +19,12 @@ export class LoginComponent {
   password = signal('');
   loading = signal(false);
   errorMessage = signal<string | null>(null);
+
+  ngOnInit(): void {
+    if (this.authService.isAuthenticated()) {
+      this.router.navigate(['/dashboard']);
+    }
+  }
 
   async onSubmit() {
     if (!this.email() || !this.password()) {
@@ -31,7 +37,7 @@ export class LoginComponent {
 
     try {
       await this.authService.signIn(this.email(), this.password());
-      this.router.navigate(['/']);
+      this.router.navigate(['/dashboard']);
     } catch (err: any) {
       this.errorMessage.set(err.message || 'Error al iniciar sesión. Revisa tus credenciales.');
     } finally {

@@ -1,0 +1,305 @@
+<div class="dashboard-root">
+
+  <!-- ─── SIDEBAR NAV ─────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon"><i class="bi bi-lightning-charge-fill"></i></div>
+      <span class="brand-name">Resiste</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="nav-item active" routerLink="/dashboard">
+        <i class="bi bi-grid-fill"></i>
+        <span>Inicio</span>
+      </a>
+      <a class="nav-item" routerLink="/sesiones">
+        <i class="bi bi-play-circle-fill"></i>
+        <span>Sesiones</span>
+      </a>
+      <a class="nav-item" routerLink="/metas">
+        <i class="bi bi-trophy-fill"></i>
+        <span>Metas</span>
+      </a>
+      <a class="nav-item" routerLink="/tipos-actividad">
+        <i class="bi bi-activity"></i>
+        <span>Actividades</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="user-avatar">{{ userName().charAt(0).toUpperCase() }}</div>
+        <div class="user-info">
+          <span class="user-name">{{ userName() }}</span>
+          <span class="user-role">Atleta</span>
+        </div>
+      </div>
+      <button class="logout-btn" (click)="logout()" title="Cerrar sesión">
+        <i class="bi bi-box-arrow-right"></i>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ─── MAIN CONTENT ──────────────────────── -->
+  <main class="main-content">
+
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="time-badge">
+          <i class="bi bi-clock-fill"></i>
+          <span>{{ currentTime() }}</span>
+        </div>
+        <span class="date-label">{{ currentDate() }}</span>
+      </div>
+      <div class="topbar-right">
+        <button class="icon-btn notif-toggle" (click)="toggleNotifDropdown()" title="Centro de Notificaciones">
+          <i class="bi bi-bell-fill"></i>
+          @if (unreadCount() > 0) {
+            <span class="notif-dot"></span>
+          }
+        </button>
+        <div class="topbar-avatar">{{ userName().charAt(0).toUpperCase() }}</div>
+
+        <!-- NOTIFICATION DROPDOWN -->
+        @if (showNotifDropdown()) {
+        <div class="notif-dropdown">
+          <div class="notif-dropdown-header">
+            <h4><i class="bi bi-bell-fill"></i> Notificaciones</h4>
+            @if (unreadCount() > 0) {
+              <button class="mark-read-btn" (click)="markAllNotifsAsRead()">Marcar leídas</button>
+            }
+          </div>
+          <div class="notif-dropdown-list">
+            @for (item of notificationHistory(); track item.id) {
+            <div class="notif-item" [class.unread]="!item.read">
+              <div class="notif-item-title">{{ item.title }}</div>
+              <div class="notif-item-body">{{ item.body }}</div>
+              <div class="notif-item-time">{{ item.time }}</div>
+            </div>
+            }
+          </div>
+          <div class="notif-dropdown-footer">
+            <button class="boost-btn" (click)="triggerMotivationalToast(); toggleNotifDropdown()">
+              <i class="bi bi-lightning-charge-fill"></i> ¡Dame un boost motivacional!
+            </button>
+          </div>
+        </div>
+        }
+      </div>
+    </header>
+
+    <!-- ONBOARDING BANNER -->
+    @if (showOnboarding()) {
+    <div class="onboarding-banner">
+      <div class="onboarding-icon"><i class="bi bi-stars"></i></div>
+      <div class="onboarding-body">
+        <h3>¡Bienvenido a Resiste, {{ userName() }}! 🎉</h3>
+        <p>Esta es tu plataforma de entrenamiento en casa. Comienza por <strong>registrar tu primera sesión</strong>, luego define tus <strong>metas</strong> y consulta tu <strong>progreso</strong> aquí cada semana.</p>
+        <div class="onboarding-steps">
+          <div class="step"><span class="step-num">1</span><span>Registra tu primera sesión</span></div>
+          <div class="step"><span class="step-num">2</span><span>Crea una meta semanal</span></div>
+          <div class="step"><span class="step-num">3</span><span>Revisa tu progreso aquí</span></div>
+        </div>
+      </div>
+      <button class="onboarding-close" (click)="dismissOnboarding()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    }
+
+    <!-- GREETING HERO -->
+    <section class="hero-section">
+      <div class="hero-text">
+        <p class="greeting-label">{{ greeting() }},</p>
+        <h1 class="hero-name">{{ userName() }} <span class="wave">👋</span></h1>
+        <p class="hero-quote">{{ motivationalQuote() }}</p>
+      </div>
+      <div class="hero-cta">
+        <a routerLink="/sesiones" class="cta-btn primary">
+          <i class="bi bi-play-fill"></i> Iniciar Sesión
+        </a>
+        <a routerLink="/metas" class="cta-btn secondary">
+          <i class="bi bi-plus-lg"></i> Nueva Meta
+        </a>
+        <button (click)="triggerMotivationalToast()" class="cta-btn outline" title="Recordatorio motivacional">
+          <i class="bi bi-fire"></i> ¡Motívame a entrenar!
+        </button>
+      </div>
+    </section>
+
+    <!-- STATS ROW -->
+    <section class="stats-row">
+      <div class="stat-card" [class.animated]="animatedStats()">
+        <div class="stat-icon" style="background: rgba(56,189,248,0.15); color:#38bdf8">
+          <i class="bi bi-fire"></i>
+        </div>
+        <div class="stat-body">
+          <span class="stat-value">{{ streakDays() }}</span>
+          <span class="stat-label">Días seguidos</span>
+        </div>
+        <div class="stat-trend up"><i class="bi bi-arrow-up-right"></i> racha activa</div>
+      </div>
+
+      <div class="stat-card" [class.animated]="animatedStats()">
+        <div class="stat-icon" style="background: rgba(251,191,36,0.15); color:#fbbf24">
+          <i class="bi bi-trophy-fill"></i>
+        </div>
+        <div class="stat-body">
+          <span class="stat-value">{{ totalSessions() }}</span>
+          <span class="stat-label">Sesiones totales</span>
+        </div>
+        <div class="stat-trend up"><i class="bi bi-arrow-up-right"></i> esta semana</div>
+      </div>
+
+      <div class="stat-card" [class.animated]="animatedStats()">
+        <div class="stat-icon" style="background: rgba(167,139,250,0.15); color:#a78bfa">
+          <i class="bi bi-clock-history"></i>
+        </div>
+        <div class="stat-body">
+          <span class="stat-value">{{ totalMinutes() }}<small>min</small></span>
+          <span class="stat-label">Minutos activos</span>
+        </div>
+        <div class="stat-trend up"><i class="bi bi-arrow-up-right"></i> acumulados</div>
+      </div>
+
+      <div class="stat-card progress-card" [class.animated]="animatedStats()" [style.border-color]="progressColor() + '55'">
+        <div class="stat-icon" [style.background]="progressColor() + '25'" [style.color]="progressColor()">
+          <i class="bi bi-bullseye"></i>
+        </div>
+        <div class="stat-body">
+          <span class="stat-value" [style.color]="progressColor()">{{ weekProgress() }}<small [style.color]="progressColor()">%</small></span>
+          <span class="stat-label">Meta semanal: <strong [style.color]="progressColor()">{{ progressStatus() }}</strong></span>
+        </div>
+        <div class="mini-progress">
+          <div class="mini-bar" [style.width.%]="weekProgress()" [style.background]="progressColor()"></div>
+        </div>
+        <!-- Selector interactivo de prueba de colores -->
+        <div class="progress-quick-demo">
+          <span class="demo-label">Probar avance:</span>
+          <button type="button" class="prog-pill" (click)="setProgress(15)" [class.active]="weekProgress() === 15" title="Inicio (Naranja)">15%</button>
+          <button type="button" class="prog-pill" (click)="setProgress(42)" [class.active]="weekProgress() === 42" title="En progreso (Amarillo)">42%</button>
+          <button type="button" class="prog-pill" (click)="setProgress(85)" [class.active]="weekProgress() === 85" title="Avanzado (Verde claro)">85%</button>
+          <button type="button" class="prog-pill" (click)="setProgress(100)" [class.active]="weekProgress() === 100" title="Completado (Verde)">100%</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURES GRID -->
+    <section class="section-block">
+      <div class="section-header">
+        <h2 class="section-title"><i class="bi bi-grid-3x3-gap-fill"></i> Funciones principales</h2>
+        <p class="section-sub">Todo lo que necesitas para entrenar desde casa</p>
+      </div>
+      <div class="features-grid">
+        @for (feat of features; track feat.title) {
+        <div class="feature-card" (mouseenter)="setTooltip(feat.title)" (mouseleave)="setTooltip(null)" [routerLink]="feat.route">
+          <div class="feat-badge">{{ feat.badge }}</div>
+          <div class="feat-icon" [style.color]="feat.iconColor">
+            <i [class]="'bi ' + feat.icon"></i>
+          </div>
+          <h3 class="feat-title">{{ feat.title }}</h3>
+          <p class="feat-desc">{{ feat.description }}</p>
+          @if (feat.stats) {
+          <div class="feat-stats">
+            <i class="bi bi-bar-chart-fill"></i> {{ feat.stats }}
+          </div>
+          }
+          <div class="feat-arrow"><i class="bi bi-arrow-right-circle-fill"></i></div>
+        </div>
+        }
+      </div>
+    </section>
+
+    <!-- WEEKLY WORKOUT PLAN -->
+    <section class="section-block">
+      <div class="section-header">
+        <h2 class="section-title"><i class="bi bi-calendar-week-fill"></i> Plan sugerido esta semana</h2>
+        <p class="section-sub">Distribución balanceada de 5 días de entrenamiento</p>
+      </div>
+      <div class="week-plan">
+        <div class="day-card done">
+          <span class="day-name">Lun</span>
+          <div class="day-icon"><i class="bi bi-check-circle-fill"></i></div>
+          <span class="day-type">Cardio HIIT</span>
+          <span class="day-dur">25 min</span>
+        </div>
+        <div class="day-card done">
+          <span class="day-name">Mar</span>
+          <div class="day-icon"><i class="bi bi-check-circle-fill"></i></div>
+          <span class="day-type">Fuerza Superior</span>
+          <span class="day-dur">35 min</span>
+        </div>
+        <div class="day-card today">
+          <span class="day-name">Hoy</span>
+          <div class="day-icon"><i class="bi bi-lightning-fill"></i></div>
+          <span class="day-type">Core & Flexibilidad</span>
+          <span class="day-dur">30 min</span>
+        </div>
+        <div class="day-card">
+          <span class="day-name">Jue</span>
+          <div class="day-icon"><i class="bi bi-circle"></i></div>
+          <span class="day-type">Fuerza Inferior</span>
+          <span class="day-dur">35 min</span>
+        </div>
+        <div class="day-card rest">
+          <span class="day-name">Vie</span>
+          <div class="day-icon"><i class="bi bi-moon-stars-fill"></i></div>
+          <span class="day-type">Descanso activo</span>
+          <span class="day-dur">Caminar</span>
+        </div>
+        <div class="day-card">
+          <span class="day-name">Sáb</span>
+          <div class="day-icon"><i class="bi bi-circle"></i></div>
+          <span class="day-type">Full Body</span>
+          <span class="day-dur">40 min</span>
+        </div>
+        <div class="day-card rest">
+          <span class="day-name">Dom</span>
+          <div class="day-icon"><i class="bi bi-moon-stars-fill"></i></div>
+          <span class="day-type">Recuperación</span>
+          <span class="day-dur">Yoga</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- TIPS ROW -->
+    <section class="section-block">
+      <div class="section-header">
+        <h2 class="section-title"><i class="bi bi-lightbulb-fill"></i> Tips esenciales</h2>
+        <p class="section-sub">Hábitos que marcan la diferencia</p>
+      </div>
+      <div class="tips-grid">
+        @for (tip of tips; track tip.title) {
+        <div class="tip-card">
+          <div class="tip-icon"><i [class]="'bi ' + tip.icon"></i></div>
+          <div class="tip-body">
+            <h4>{{ tip.title }}</h4>
+            <p>{{ tip.body }}</p>
+          </div>
+        </div>
+        }
+      </div>
+    </section>
+
+    <!-- FOOTER MOTIVATION -->
+    <div class="dashboard-footer">
+      <i class="bi bi-heart-fill"></i> Hecho con pasión para que entrenes sin excusas • Resiste {{ currentYear }}
+    </div>
+
+  </main>
+
+  <!-- NOTIFICATIONS TOAST -->
+  <div class="notifications-container">
+    @for (notif of notifications(); track notif.id) {
+    <div class="toast-card" [class.motivational]="notif.type === 'motivational'">
+      <div class="toast-icon">
+        <i class="bi" [class.bi-lightning-charge-fill]="notif.type === 'motivational'" [class.bi-info-circle-fill]="notif.type === 'info'"></i>
+      </div>
+      <div class="toast-body">
+        {{ notif.text }}
+      </div>
+    </div>
+    }
+  </div>
+</div>
