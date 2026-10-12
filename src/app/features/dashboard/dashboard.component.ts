@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { SesionesService } from '../../core/services/sesiones.service';
-import { AuthService } from '../../core/services/auth.service';
+import { SupabaseService } from '../../core/services/supabase.service';
 import { Sesion } from '../../core/models/sesion.model';
 
 interface SemanaStats {
@@ -21,22 +21,29 @@ interface SemanaStats {
 })
 export class DashboardComponent implements OnInit {
   private sesionesService = inject(SesionesService);
-  private authService = inject(AuthService);
+  private supabaseService = inject(SupabaseService);
 
   sesiones = signal<Sesion[]>([]);
   loading = signal(true);
+  userName = signal<string>('Atleta');
 
   // Metas configurables (en semana 8 se conectarán con el servicio de metas)
   readonly META_HORAS_SEMANALES = 4;
   readonly META_SEMANAS = 12;
 
   async ngOnInit() {
+    // Obtener usuario actual desde Supabase directamente
     try {
-      const userId = this.authService.getUserId() ?? 'demo-user';
-      const data = await this.sesionesService.getSesiones(userId);
-      this.sesiones.set(data);
-    } catch (_e: unknown) {
-      // fallback — datos de demo si no hay sesiones
+      const { data } = await this.supabaseService.supabase.auth.getSession();
+      const nombre: string =
+        (data.session?.user?.user_metadata?.['nombre'] as string | undefined) ?? 'Atleta';
+      this.userName.set(nombre);
+
+      const userId: string = data.session?.user?.id ?? 'demo-user';
+      const sesionesData = await this.sesionesService.getSesiones(userId);
+      this.sesiones.set(sesionesData);
+    } catch {
+      // fallback — datos de demo si no hay sesiones o no hay sesión activa
       this.sesiones.set(this.getDemoSesiones());
     } finally {
       this.loading.set(false);
@@ -79,18 +86,18 @@ export class DashboardComponent implements OnInit {
     const fechas = [...new Set(this.sesiones().map(s => s.fecha))].sort((a, b) => b.localeCompare(a));
     if (!fechas.length) return 0;
 
-    let racha = 0;
+    let rachaCount = 0;
     const hoy = new Date();
 
     for (let i = 0; i < 30; i++) {
       const dia = new Date(hoy.getTime() - i * 86400000).toISOString().slice(0, 10);
       if (fechas.includes(dia)) {
-        racha++;
-      } else if (racha > 0) {
+        rachaCount++;
+      } else if (rachaCount > 0) {
         break;
       }
     }
-    return racha;
+    return rachaCount;
   });
 
   // ===== Últimas 8 semanas para el gráfico de barras =====
@@ -107,7 +114,7 @@ export class DashboardComponent implements OnInit {
 
       const sesSemana = this.sesiones().filter(s => s.fecha >= lunesSt && s.fecha <= domingoSt);
       const horas = +(sesSemana.reduce((acc, s) => acc + s.duracion_min, 0) / 60).toFixed(1);
-      const esfuerzoPromedio = sesSemana.length
+      const esfuerzoPromedioSem = sesSemana.length
         ? +(sesSemana.reduce((acc, s) => acc + s.esfuerzo_percibido, 0) / sesSemana.length).toFixed(1)
         : 0;
 
@@ -115,7 +122,7 @@ export class DashboardComponent implements OnInit {
         semana: `S${8 - i}`,
         horas,
         sesiones: sesSemana.length,
-        esfuerzoPromedio
+        esfuerzoPromedio: esfuerzoPromedioSem
       });
     }
     return resultado;
@@ -127,14 +134,13 @@ export class DashboardComponent implements OnInit {
 
   // ===== Tendencia de esfuerzo (últimas 10 sesiones) =====
   tendenciaEsfuerzo = computed(() => {
-    const ultimas = [...this.sesiones()]
+    return [...this.sesiones()]
       .sort((a, b) => b.fecha.localeCompare(a.fecha))
       .slice(0, 10)
       .reverse();
-    return ultimas;
   });
 
-  maxEsfuerzo = 10;
+  readonly maxEsfuerzo = 10;
 
   getBarHeightPorcentaje(horas: number): number {
     return Math.min(100, (horas / this.maxHorasSemana()) * 100);
@@ -175,8 +181,7 @@ export class DashboardComponent implements OnInit {
   });
 
   getUserName(): string {
-    const user = this.authService.currentUser() as Record<string, any> | null;
-    return user?.['user_metadata']?.['nombre'] ?? 'Atleta';
+    return this.userName();
   }
 
   // ===== Helpers para racha semanal =====

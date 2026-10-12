@@ -4,7 +4,7 @@ import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { SesionesService } from '../../core/services/sesiones.service';
 import { TiposActividadService } from '../../core/services/tipos-actividad.service';
-import { AuthService } from '../../core/services/auth.service';
+import { SupabaseService } from '../../core/services/supabase.service';
 import { Sesion } from '../../core/models/sesion.model';
 import { TipoActividad } from '../../core/models/tipo-actividad.model';
 
@@ -18,8 +18,10 @@ import { TipoActividad } from '../../core/models/tipo-actividad.model';
 export class SesionesComponent implements OnInit {
   private sesionesService = inject(SesionesService);
   private tiposService = inject(TiposActividadService);
-  private authService = inject(AuthService);
+  private supabaseService = inject(SupabaseService);
   private fb = inject(FormBuilder);
+
+  private userId = 'demo-user';
 
   // Estado
   sesiones = signal<Sesion[]>([]);
@@ -73,14 +75,18 @@ export class SesionesComponent implements OnInit {
   });
 
   async ngOnInit() {
+    // Resolver userId desde Supabase antes de cargar sesiones
+    try {
+      const { data } = await this.supabaseService.supabase.auth.getSession();
+      this.userId = data.session?.user?.id ?? 'demo-user';
+    } catch { /* sin conexión — usar demo */ }
     await Promise.all([this.cargarSesiones(), this.cargarTipos()]);
   }
 
   async cargarSesiones() {
     this.loading.set(true);
     try {
-      const userId = this.authService.getUserId() ?? 'demo-user';
-      const data = await this.sesionesService.getSesiones(userId);
+      const data = await this.sesionesService.getSesiones(this.userId);
       this.sesiones.set(data);
     } catch (e: any) {
       this.error.set('Error al cargar sesiones');
@@ -127,7 +133,7 @@ export class SesionesComponent implements OnInit {
     this.guardando.set(true);
     this.error.set(null);
 
-    const userId = this.authService.getUserId() ?? 'demo-user';
+    const userId = this.userId;
     const valores = this.form.value;
 
     try {

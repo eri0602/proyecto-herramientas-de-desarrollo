@@ -85,7 +85,7 @@ src/app/
 _(Ajustado: el proyecto arranca recién en la semana 4 — semanas 1-3 sin avance. Roadmap original comprimido para que quepa en las semanas restantes; Docker queda fuera salvo que el curso lo pida explícitamente.)_
 
 | Sem | Jhon Rivas (Auth + Metas)                                                              
-| Erick Cruz (Sesiones + Dashboard)                     |
+| Eri valladolid (Sesiones + Dashboard)                     |
 | --- | ------------------------------------------------------------------------------------- | ---------------------------------------------------- |
 | 4   | Setup conjunto: scaffold Angular, carpetas, tablas en Supabase, cada uno crea su rama | (mismo, en conjunto)                                 |
 | 5   | AuthService + Login/Registro                                                          | CRUD `tipos_actividad` + formulario registrar sesión |
