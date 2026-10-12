@@ -1,0 +1,76 @@
+<div class="page-container">
+  <header class="page-header">
+    <div class="header-left">
+      <a routerLink="/dashboard" class="btn-back">
+        <span class="icon">←</span> Dashboard
+      </a>
+      <h1>Tipos de Actividad</h1>
+      <p class="subtitle">Gestiona los tipos de entrenamiento disponibles</p>
+    </div>
+  </header>
+
+  <!-- Formulario agregar -->
+  <section class="card form-card">
+    <h2>Agregar tipo de actividad</h2>
+    <form [formGroup]="form" (ngSubmit)="guardar()" class="inline-form">
+      <div class="field-group">
+        <input
+          id="nombre-tipo"
+          type="text"
+          formControlName="nombre"
+          placeholder="Ej: Carrera, Ciclismo..."
+          class="input-field"
+          [class.invalid]="form.controls['nombre'].invalid && form.controls['nombre'].touched"
+        />
+        @if (form.controls['nombre'].errors?.['required'] && form.controls['nombre'].touched) {
+          <span class="field-error">El nombre es requerido</span>
+        }
+        @if (form.controls['nombre'].errors?.['minlength']) {
+          <span class="field-error">Mínimo 2 caracteres</span>
+        }
+      </div>
+      <button type="submit" class="btn-primary" [disabled]="form.invalid || guardando()">
+        @if (guardando()) { Guardando... } @else { + Agregar }
+      </button>
+    </form>
+
+    @if (exito()) {
+      <div class="alert alert-success">✓ {{ exito() }}</div>
+    }
+    @if (error()) {
+      <div class="alert alert-error">✕ {{ error() }}</div>
+    }
+  </section>
+
+  <!-- Lista -->
+  <section class="card list-card">
+    <h2>Tipos disponibles</h2>
+
+    @if (loading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <span>Cargando...</span>
+      </div>
+    } @else if (tipos().length === 0) {
+      <div class="empty-state">
+        <span class="empty-icon">🏃</span>
+        <p>No hay tipos de actividad aún. ¡Agrega el primero!</p>
+      </div>
+    } @else {
+      <ul class="tipos-list">
+        @for (tipo of tipos(); track tipo.id) {
+          <li class="tipo-item">
+            <span class="tipo-nombre">{{ tipo.nombre }}</span>
+            <button
+              class="btn-icon btn-danger"
+              (click)="eliminar(tipo.id!, tipo.nombre)"
+              title="Eliminar"
+            >
+              🗑
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+</div>

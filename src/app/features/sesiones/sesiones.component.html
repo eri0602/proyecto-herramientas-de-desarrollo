@@ -1,0 +1,238 @@
+<div class="page-container">
+  <!-- Header -->
+  <header class="page-header">
+    <div class="header-left">
+      <a routerLink="/dashboard" class="btn-back">← Dashboard</a>
+      <h1>Mis Sesiones</h1>
+      <p class="subtitle">Registra y gestiona tu historial de entrenamiento</p>
+    </div>
+    <button class="btn-primary" (click)="abrirFormularioNuevo()">
+      + Nueva Sesión
+    </button>
+  </header>
+
+  <!-- Alertas globales -->
+  @if (exito()) {
+    <div class="alert alert-success">✓ {{ exito() }}</div>
+  }
+  @if (error() && !mostrarFormulario()) {
+    <div class="alert alert-error">✕ {{ error() }}</div>
+  }
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <span class="stat-value">{{ totalSesiones() }}</span>
+      <span class="stat-label">Sesiones</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-value">{{ totalHoras() }}h</span>
+      <span class="stat-label">Total horas</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-value">{{ esfuerzoPromedio() }}/10</span>
+      <span class="stat-label">Esfuerzo prom.</span>
+    </div>
+  </div>
+
+  <!-- Modal / Formulario -->
+  @if (mostrarFormulario()) {
+    <div class="modal-overlay" (click)="cancelar()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>{{ editando() ? 'Editar Sesión' : 'Nueva Sesión' }}</h2>
+          <button class="btn-close" (click)="cancelar()">✕</button>
+        </div>
+
+        @if (error()) {
+          <div class="alert alert-error">✕ {{ error() }}</div>
+        }
+
+        <form [formGroup]="form" (ngSubmit)="guardar()" class="form-grid">
+          <!-- Tipo actividad -->
+          <div class="field-group full-width">
+            <label for="tipo-actividad">Tipo de actividad *</label>
+            <select
+              id="tipo-actividad"
+              formControlName="tipo_actividad_id"
+              class="input-field"
+              [class.invalid]="form.controls['tipo_actividad_id'].invalid && form.controls['tipo_actividad_id'].touched"
+            >
+              <option value="">Selecciona un tipo...</option>
+              @for (tipo of tiposActividad(); track tipo.id) {
+                <option [value]="tipo.id">{{ tipo.nombre }}</option>
+              }
+            </select>
+            @if (form.controls['tipo_actividad_id'].invalid && form.controls['tipo_actividad_id'].touched) {
+              <span class="field-error">Selecciona un tipo de actividad</span>
+            }
+          </div>
+
+          <!-- Fecha -->
+          <div class="field-group">
+            <label for="fecha">Fecha *</label>
+            <input
+              id="fecha"
+              type="date"
+              formControlName="fecha"
+              class="input-field"
+              [class.invalid]="form.controls['fecha'].invalid && form.controls['fecha'].touched"
+            />
+            @if (form.controls['fecha'].invalid && form.controls['fecha'].touched) {
+              <span class="field-error">La fecha es requerida</span>
+            }
+          </div>
+
+          <!-- Duración -->
+          <div class="field-group">
+            <label for="duracion">Duración (minutos) *</label>
+            <input
+              id="duracion"
+              type="number"
+              formControlName="duracion_min"
+              class="input-field"
+              placeholder="Ej: 45"
+              min="1"
+              max="600"
+              [class.invalid]="form.controls['duracion_min'].invalid && form.controls['duracion_min'].touched"
+            />
+            @if (form.controls['duracion_min'].invalid && form.controls['duracion_min'].touched) {
+              <span class="field-error">Ingresa entre 1 y 600 minutos</span>
+            }
+          </div>
+
+          <!-- Esfuerzo -->
+          <div class="field-group full-width">
+            <label for="esfuerzo">
+              Esfuerzo percibido: <strong [style.color]="getEsfuerzoColor(form.value.esfuerzo_percibido ?? 5)">
+                {{ form.value.esfuerzo_percibido }}/10 — {{ getEsfuerzoLabel(form.value.esfuerzo_percibido ?? 5) }}
+              </strong>
+            </label>
+            <input
+              id="esfuerzo"
+              type="range"
+              formControlName="esfuerzo_percibido"
+              min="1"
+              max="10"
+              class="range-input"
+            />
+            <div class="range-labels">
+              <span>1 Muy suave</span>
+              <span>10 Máximo</span>
+            </div>
+          </div>
+
+          <!-- Notas -->
+          <div class="field-group full-width">
+            <label for="notas">Notas (opcional)</label>
+            <textarea
+              id="notas"
+              formControlName="notas"
+              class="input-field textarea"
+              placeholder="¿Cómo te sentiste? ¿Condiciones especiales?"
+              rows="2"
+            ></textarea>
+          </div>
+
+          <div class="form-actions full-width">
+            <button type="button" class="btn-secondary" (click)="cancelar()">Cancelar</button>
+            <button type="submit" class="btn-primary" [disabled]="form.invalid || guardando()">
+              @if (guardando()) { Guardando... } @else { {{ editando() ? 'Actualizar' : 'Registrar Sesión' }} }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Filtros -->
+  <section class="card filtros-card">
+    <div class="filtros-header">
+      <h2>Filtros</h2>
+      @if (filtroTipo() || filtroFechaDesde() || filtroFechaHasta()) {
+        <button class="btn-clear" (click)="limpiarFiltros()">Limpiar filtros</button>
+      }
+    </div>
+    <div class="filtros-grid">
+      <div class="field-group">
+        <label for="filtro-tipo">Tipo de actividad</label>
+        <select id="filtro-tipo" class="input-field" [value]="filtroTipo()" (change)="filtroTipo.set(($event.target as HTMLSelectElement).value)">
+          <option value="">Todos los tipos</option>
+          @for (tipo of tiposActividad(); track tipo.id) {
+            <option [value]="tipo.id">{{ tipo.nombre }}</option>
+          }
+        </select>
+      </div>
+      <div class="field-group">
+        <label for="filtro-desde">Desde</label>
+        <input id="filtro-desde" type="date" class="input-field" [value]="filtroFechaDesde()" (change)="filtroFechaDesde.set(($event.target as HTMLInputElement).value)" />
+      </div>
+      <div class="field-group">
+        <label for="filtro-hasta">Hasta</label>
+        <input id="filtro-hasta" type="date" class="input-field" [value]="filtroFechaHasta()" (change)="filtroFechaHasta.set(($event.target as HTMLInputElement).value)" />
+      </div>
+    </div>
+  </section>
+
+  <!-- Lista de sesiones -->
+  <section class="sessions-section">
+    @if (loading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <span>Cargando sesiones...</span>
+      </div>
+    } @else if (sesionesFiltradasComputed().length === 0) {
+      <div class="empty-state">
+        <span class="empty-icon">🏃</span>
+        <p>No hay sesiones registradas aún.</p>
+        <button class="btn-primary" (click)="abrirFormularioNuevo()">Registrar primera sesión</button>
+      </div>
+    } @else {
+      <div class="sessions-grid">
+        @for (sesion of sesionesFiltradasComputed(); track sesion.id) {
+          <div class="session-card">
+            <div class="session-header">
+              <div class="session-tipo">
+                <span class="tipo-badge">{{ getNombreTipo(sesion.tipo_actividad_id) }}</span>
+              </div>
+              <div class="session-actions">
+                <button class="btn-icon btn-edit" (click)="abrirEditar(sesion)" title="Editar">✏️</button>
+                <button class="btn-icon btn-danger" (click)="eliminar(sesion)" title="Eliminar">🗑</button>
+              </div>
+            </div>
+
+            <div class="session-body">
+              <div class="session-stat">
+                <span class="s-label">📅 Fecha</span>
+                <span class="s-value">{{ sesion.fecha }}</span>
+              </div>
+              <div class="session-stat">
+                <span class="s-label">⏱ Duración</span>
+                <span class="s-value">{{ sesion.duracion_min }} min</span>
+              </div>
+              <div class="session-stat">
+                <span class="s-label">💥 Esfuerzo</span>
+                <span class="s-value esfuerzo-badge" [style.color]="getEsfuerzoColor(sesion.esfuerzo_percibido)">
+                  {{ sesion.esfuerzo_percibido }}/10
+                </span>
+              </div>
+            </div>
+
+            @if (sesion.notas) {
+              <p class="session-notas">💬 {{ sesion.notas }}</p>
+            }
+
+            <!-- Barra de esfuerzo -->
+            <div class="esfuerzo-bar-container">
+              <div
+                class="esfuerzo-bar"
+                [style.width.%]="(sesion.esfuerzo_percibido / 10) * 100"
+                [style.background]="getEsfuerzoColor(sesion.esfuerzo_percibido)"
+              ></div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </section>
+</div>
