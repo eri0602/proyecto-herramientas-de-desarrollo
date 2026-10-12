@@ -24,7 +24,67 @@ export class SesionesService {
     }
 
     // Modo Local / Demo
-    const stored = localStorage.getItem('resiste_sesiones');
+    let stored = localStorage.getItem('resiste_sesiones');
+    if (!stored) {
+      const today = new Date();
+      const fmt = (daysAgo: number) => {
+        const d = new Date(today);
+        d.setDate(d.getDate() - daysAgo);
+        return d.toISOString().split('T')[0];
+      };
+
+      const defaultDemoSessions: Sesion[] = [
+        {
+          id: 'ses_demo_1',
+          usuario_id: usuarioId,
+          tipo_actividad_id: 'act_1',
+          fecha: fmt(0),
+          duracion_min: 45,
+          esfuerzo_percibido: 7,
+          notas: 'Carrera continua ritmo moderado-fuerte'
+        },
+        {
+          id: 'ses_demo_2',
+          usuario_id: usuarioId,
+          tipo_actividad_id: 'act_4',
+          fecha: fmt(1),
+          duracion_min: 30,
+          esfuerzo_percibido: 8,
+          notas: 'Intervalos HIIT 30s x 30s'
+        },
+        {
+          id: 'ses_demo_3',
+          usuario_id: usuarioId,
+          tipo_actividad_id: 'act_2',
+          fecha: fmt(3),
+          duracion_min: 60,
+          esfuerzo_percibido: 5,
+          notas: 'Fondo suave en ruta'
+        },
+        {
+          id: 'ses_demo_4',
+          usuario_id: usuarioId,
+          tipo_actividad_id: 'act_3',
+          fecha: fmt(5),
+          duracion_min: 40,
+          esfuerzo_percibido: 6,
+          notas: 'Técnica de crol y series aeróbicas'
+        },
+        {
+          id: 'ses_demo_5',
+          usuario_id: usuarioId,
+          tipo_actividad_id: 'act_5',
+          fecha: fmt(7),
+          duracion_min: 50,
+          esfuerzo_percibido: 4,
+          notas: 'Caminata rápida de recuperación'
+        }
+      ];
+
+      localStorage.setItem('resiste_sesiones', JSON.stringify(defaultDemoSessions));
+      stored = JSON.stringify(defaultDemoSessions);
+    }
+
     const list: Sesion[] = stored ? JSON.parse(stored) : [];
     const tipos = await this.tiposActividadService.getTiposActividad();
     const tiposMap = new Map(tipos.map(t => [t.id, t]));

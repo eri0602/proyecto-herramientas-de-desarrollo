@@ -1,26 +1,33 @@
 <div class="dashboard-root">
 
+  @if (mobileNavOpen()) {
+    <div class="sidebar-backdrop" (click)="toggleMobileNav()"></div>
+  }
+
   <!-- ─── SIDEBAR NAV ─────────────────────── -->
-  <aside class="sidebar">
+  <aside class="sidebar" [class.mobile-open]="mobileNavOpen()">
     <div class="sidebar-brand">
       <div class="brand-icon"><i class="bi bi-lightning-charge-fill"></i></div>
       <span class="brand-name">Resiste</span>
+      <button class="sidebar-close-btn" (click)="toggleMobileNav()" title="Cerrar menú">
+        <i class="bi bi-x-lg"></i>
+      </button>
     </div>
 
     <nav class="sidebar-nav">
-      <a class="nav-item active" routerLink="/dashboard">
+      <a class="nav-item active" routerLink="/dashboard" (click)="mobileNavOpen.set(false)">
         <i class="bi bi-grid-fill"></i>
         <span>Inicio</span>
       </a>
-      <a class="nav-item" routerLink="/sesiones">
+      <a class="nav-item" routerLink="/sesiones" (click)="mobileNavOpen.set(false)">
         <i class="bi bi-play-circle-fill"></i>
         <span>Sesiones</span>
       </a>
-      <a class="nav-item" routerLink="/metas">
+      <a class="nav-item" routerLink="/metas" (click)="mobileNavOpen.set(false)">
         <i class="bi bi-trophy-fill"></i>
         <span>Metas</span>
       </a>
-      <a class="nav-item" routerLink="/tipos-actividad">
+      <a class="nav-item" routerLink="/tipos-actividad" (click)="mobileNavOpen.set(false)">
         <i class="bi bi-activity"></i>
         <span>Actividades</span>
       </a>
@@ -46,6 +53,9 @@
     <!-- TOP BAR -->
     <header class="topbar">
       <div class="topbar-left">
+        <button class="mobile-menu-btn" (click)="toggleMobileNav()" title="Abrir menú">
+          <i class="bi bi-list"></i>
+        </button>
         <div class="time-badge">
           <i class="bi bi-clock-fill"></i>
           <span>{{ currentTime() }}</span>
@@ -185,6 +195,111 @@
       </div>
     </section>
 
+    <!-- ─── TENDENCIA DE ESFUERZO (RPE 1-10) Y FATIGA (SEMANA 9) ─── -->
+    <section class="section-block effort-section">
+      <div class="section-header-flex">
+        <div>
+          <span class="section-badge-tag"><i class="bi bi-fire"></i> Análisis de Fatiga (Semana 9)</span>
+          <h2 class="section-title"><i class="bi bi-graph-up-arrow"></i> Tendencia de Esfuerzo Percibido</h2>
+          <p class="section-sub">Monitorea la curva de intensidad (RPE 1–10) de tus últimos entrenamientos para evitar el sobreentrenamiento.</p>
+        </div>
+
+        <div class="effort-status-pill" [style.border-color]="effortLoadStatus().color + '55'" [style.background]="effortLoadStatus().color + '15'">
+          <div class="status-pulse" [style.background]="effortLoadStatus().color"></div>
+          <div>
+            <strong class="status-title" [style.color]="effortLoadStatus().color">{{ effortLoadStatus().title }}</strong>
+            <span class="status-desc">{{ effortLoadStatus().desc }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="effort-grid-layout">
+        <!-- Gráfico interactivo de barras de esfuerzo -->
+        <div class="effort-chart-card">
+          <div class="chart-header">
+            <span class="chart-title"><i class="bi bi-bar-chart-line-fill"></i> Evolución de Sesiones Recientes</span>
+            <div class="chart-legend">
+              <span class="legend-item"><span class="dot suave"></span> Suave (1-3)</span>
+              <span class="legend-item"><span class="dot moderado"></span> Mod (4-6)</span>
+              <span class="legend-item"><span class="dot intenso"></span> Intenso (7-8)</span>
+              <span class="legend-item"><span class="dot maximo"></span> Máx (9-10)</span>
+            </div>
+          </div>
+
+          @if (effortTrend().length === 0) {
+            <div class="empty-effort-state">
+              <i class="bi bi-activity"></i>
+              <p>Aún no hay suficientes sesiones registradas para generar la curva de esfuerzo.</p>
+              <a routerLink="/sesiones" class="btn-reg-session">Registrar mi primera sesión</a>
+            </div>
+          } @else {
+            <div class="chart-bars-wrap">
+              <!-- Guías de fondo horizontales -->
+              <div class="chart-guides">
+                <div class="guide-line"><span class="guide-val">10</span></div>
+                <div class="guide-line"><span class="guide-val">7</span></div>
+                <div class="guide-line"><span class="guide-val">4</span></div>
+                <div class="guide-line"><span class="guide-val">1</span></div>
+              </div>
+
+              <div class="bars-flex">
+                @for (item of effortTrend(); track item.id) {
+                  <div class="bar-col">
+                    <div class="bar-tooltip">
+                      <strong>{{ item.actividad }}</strong>
+                      <span>{{ item.duracion }} min • RPE {{ item.rpe }}/10 ({{ item.label }})</span>
+                    </div>
+                    <div class="bar-track">
+                      <div class="bar-fill" [style.height.%]="item.heightPct" [style.background]="item.color">
+                        <span class="bar-rpe-badge">{{ item.rpe }}</span>
+                      </div>
+                    </div>
+                    <div class="bar-info">
+                      <span class="bar-day">{{ item.dayName }}</span>
+                      <span class="bar-date">{{ item.dayNum }}</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Métricas y Distribución de Carga -->
+        <div class="effort-metrics-card">
+          <div class="effort-kpi-row">
+            <div class="mini-kpi">
+              <span class="kpi-label">RPE Medio</span>
+              <span class="kpi-value cyan">{{ averageEffort() }}<small>/10</small></span>
+              <span class="kpi-sub">Intensidad regular</span>
+            </div>
+            <div class="mini-kpi">
+              <span class="kpi-label">Pico Máximo</span>
+              <span class="kpi-value gold">{{ maxEffort() }}<small>/10</small></span>
+              <span class="kpi-sub">Esfuerzo límite registrado</span>
+            </div>
+          </div>
+
+          <div class="distribution-block">
+            <h4 class="distrib-title"><i class="bi bi-pie-chart-fill"></i> Distribución de Intensidad</h4>
+            <div class="distrib-bars-list">
+              @for (dist of effortDistribution(); track dist.name) {
+                <div class="distrib-row">
+                  <div class="distrib-labels">
+                    <span class="dist-name">{{ dist.name }}</span>
+                    <span class="dist-count">{{ dist.count }} sesiones ({{ dist.pct }}%)</span>
+                  </div>
+                  <div class="dist-bar-track">
+                    <div class="dist-bar-fill" [style.width.%]="dist.pct" [style.background]="dist.color"></div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- FEATURES GRID -->
     <section class="section-block">
       <div class="section-header">
@@ -302,4 +417,24 @@
     </div>
     }
   </div>
+
+  <!-- MOBILE BOTTOM NAV (Semana 9 Responsive) -->
+  <nav class="mobile-bottom-nav">
+    <a routerLink="/dashboard" routerLinkActive="active" class="m-nav-item">
+      <i class="bi bi-grid-fill"></i>
+      <span>Inicio</span>
+    </a>
+    <a routerLink="/sesiones" routerLinkActive="active" class="m-nav-item">
+      <i class="bi bi-play-circle-fill"></i>
+      <span>Sesiones</span>
+    </a>
+    <a routerLink="/metas" routerLinkActive="active" class="m-nav-item">
+      <i class="bi bi-trophy-fill"></i>
+      <span>Metas</span>
+    </a>
+    <a routerLink="/tipos-actividad" routerLinkActive="active" class="m-nav-item">
+      <i class="bi bi-activity"></i>
+      <span>Tipos</span>
+    </a>
+  </nav>
 </div>

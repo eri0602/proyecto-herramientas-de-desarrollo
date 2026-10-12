@@ -136,6 +136,97 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return '¡Completado! (Verde)';
   });
 
+  // Semana 9: Tendencia de Esfuerzo (RPE 1-10) y Estado de Fatiga
+  mobileNavOpen = signal(false);
+
+  readonly effortTrend = computed(() => {
+    const sessions = this.userSessions();
+    if (sessions.length === 0) return [];
+
+    // Tomar las últimas 7 sesiones cronológicamente
+    const sorted = [...sessions]
+      .sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
+      .slice(-7);
+
+    return sorted.map((s, idx) => {
+      const rpe = s.esfuerzo_percibido || 5;
+      const heightPct = Math.round((rpe / 10) * 100);
+      let color = '#38bdf8'; // Suave
+      let label = 'Suave';
+      if (rpe >= 4 && rpe <= 6) {
+        color = '#fbbf24'; // Moderado
+        label = 'Moderado';
+      } else if (rpe >= 7 && rpe <= 8) {
+        color = '#f97316'; // Fuerte
+        label = 'Intenso';
+      } else if (rpe >= 9) {
+        color = '#ef4444'; // Extenuante
+        label = 'Máximo';
+      }
+
+      // Nombre legible de fecha (ej. "Lun", "12 Oct")
+      const dateObj = new Date(s.fecha + 'T00:00:00');
+      const dayName = dateObj.toLocaleDateString('es-MX', { weekday: 'short' });
+      const dayNum = dateObj.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
+
+      return {
+        id: s.id || `trend_${idx}`,
+        fecha: s.fecha,
+        dayName,
+        dayNum,
+        rpe,
+        heightPct,
+        color,
+        label,
+        duracion: s.duracion_min,
+        actividad: s.tipos_actividad?.nombre || 'Entrenamiento'
+      };
+    });
+  });
+
+  readonly averageEffort = computed(() => {
+    const list = this.userSessions();
+    if (list.length === 0) return 0;
+    const sum = list.reduce((acc, s) => acc + (s.esfuerzo_percibido || 0), 0);
+    return Math.round((sum / list.length) * 10) / 10;
+  });
+
+  readonly maxEffort = computed(() => {
+    const list = this.userSessions();
+    if (list.length === 0) return 0;
+    return Math.max(...list.map(s => s.esfuerzo_percibido || 0));
+  });
+
+  readonly effortLoadStatus = computed(() => {
+    const avg = this.averageEffort();
+    if (avg === 0) return { title: 'Sin actividad', desc: 'Registra tu primera sesión para calcular fatiga.', color: '#64748b' };
+    if (avg < 4.5) return { title: 'Carga Ligera', desc: 'Buen ritmo aeróbico base. Puedes aumentar gradualmente el esfuerzo.', color: '#38bdf8' };
+    if (avg <= 7.0) return { title: 'Carga Progresiva Óptima', desc: 'Zona ideal de adaptación cardiovascular y resistencia muscular.', color: '#10b981' };
+    if (avg <= 8.5) return { title: 'Carga Alta', desc: 'Esfuerzo exigente. Recuerda hidratarte y respetar 1 día de descanso.', color: '#fbbf24' };
+    return { title: 'Fatiga Elevada / Sobrecarga', desc: 'Atención: Nivel de exigencia alto. Programa una sesión regenerativa.', color: '#ef4444' };
+  });
+
+  readonly effortDistribution = computed(() => {
+    const list = this.userSessions();
+    const total = list.length || 1;
+    let suave = 0, moderado = 0, intenso = 0, maximo = 0;
+
+    for (const s of list) {
+      const rpe = s.esfuerzo_percibido || 0;
+      if (rpe <= 3) suave++;
+      else if (rpe <= 6) moderado++;
+      else if (rpe <= 8) intenso++;
+      else maximo++;
+    }
+
+    return [
+      { name: 'Suave (1-3)', count: suave, pct: Math.round((suave / total) * 100), color: '#38bdf8' },
+      { name: 'Moderado (4-6)', count: moderado, pct: Math.round((moderado / total) * 100), color: '#34d399' },
+      { name: 'Intenso (7-8)', count: intenso, pct: Math.round((intenso / total) * 100), color: '#fbbf24' },
+      { name: 'Máximo (9-10)', count: maximo, pct: Math.round((maximo / total) * 100), color: '#ef4444' }
+    ];
+  });
+
   // Notificaciones Toast y Centro de Notificaciones
   notifications = signal<{ id: number; text: string; type: string }[]>([]);
   showNotifDropdown = signal(false);
@@ -326,6 +417,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const color = this.progressColor();
     const status = this.progressStatus();
     this.showNotification(`Progreso calculado: ${this.weekProgress()}% — Estado: ${status}`, 'info');
+  }
+
+  toggleMobileNav(): void {
+    this.mobileNavOpen.update(v => !v);
   }
 
   async logout(): Promise<void> {
