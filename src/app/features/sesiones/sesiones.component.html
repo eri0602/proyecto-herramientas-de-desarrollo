@@ -156,7 +156,7 @@
     <div class="filtros-grid">
       <div class="field-group">
         <label for="filtro-tipo">Tipo de actividad</label>
-        <select id="filtro-tipo" class="input-field" [value]="filtroTipo()" (change)="filtroTipo.set(($event.target as HTMLSelectElement).value)">
+        <select id="filtro-tipo" class="input-field" [value]="filtroTipo()" (change)="onFiltroTipoChange($event)">
           <option value="">Todos los tipos</option>
           @for (tipo of tiposActividad(); track tipo.id) {
             <option [value]="tipo.id">{{ tipo.nombre }}</option>
@@ -165,11 +165,11 @@
       </div>
       <div class="field-group">
         <label for="filtro-desde">Desde</label>
-        <input id="filtro-desde" type="date" class="input-field" [value]="filtroFechaDesde()" (change)="filtroFechaDesde.set(($event.target as HTMLInputElement).value)" />
+        <input id="filtro-desde" type="date" class="input-field" [value]="filtroFechaDesde()" (change)="onFiltroDesdeChange($event)" />
       </div>
       <div class="field-group">
         <label for="filtro-hasta">Hasta</label>
-        <input id="filtro-hasta" type="date" class="input-field" [value]="filtroFechaHasta()" (change)="filtroFechaHasta.set(($event.target as HTMLInputElement).value)" />
+        <input id="filtro-hasta" type="date" class="input-field" [value]="filtroFechaHasta()" (change)="onFiltroHastaChange($event)" />
       </div>
     </div>
   </section>

@@ -35,7 +35,7 @@ export class DashboardComponent implements OnInit {
       const userId = this.authService.getUserId() ?? 'demo-user';
       const data = await this.sesionesService.getSesiones(userId);
       this.sesiones.set(data);
-    } catch (e) {
+    } catch (_e: unknown) {
       // fallback — datos de demo si no hay sesiones
       this.sesiones.set(this.getDemoSesiones());
     } finally {
@@ -175,7 +175,8 @@ export class DashboardComponent implements OnInit {
   });
 
   getUserName(): string {
-    return this.authService.currentUser()?.user_metadata?.['nombre'] ?? 'Atleta';
+    const user = this.authService.currentUser() as Record<string, any> | null;
+    return user?.['user_metadata']?.['nombre'] ?? 'Atleta';
   }
 
   // ===== Helpers para racha semanal =====

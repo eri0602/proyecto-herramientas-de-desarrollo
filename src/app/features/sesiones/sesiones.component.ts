@@ -196,4 +196,17 @@ export class SesionesComponent implements OnInit {
     if (val <= 8) return '#fb923c';
     return '#f87171';
   }
+
+  // ===== Handlers para filtros (evitan type-casts en el template) =====
+  onFiltroTipoChange(event: Event): void {
+    this.filtroTipo.set((event.target as HTMLSelectElement).value);
+  }
+
+  onFiltroDesdeChange(event: Event): void {
+    this.filtroFechaDesde.set((event.target as HTMLInputElement).value);
+  }
+
+  onFiltroHastaChange(event: Event): void {
+    this.filtroFechaHasta.set((event.target as HTMLInputElement).value);
+  }
 }
