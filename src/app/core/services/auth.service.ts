@@ -41,6 +41,40 @@ export class AuthService {
       }
     } else {
       // Modo Local / Demo para presentación
+      const defaultDemoUsers = [
+        {
+          id: 'usr_demo_1',
+          email: 'demo@resiste.com',
+          password: 'password123',
+          user_metadata: { nombre: 'Atleta Resiste' },
+          app_metadata: { provider: 'email' },
+          aud: 'authenticated',
+          created_at: new Date().toISOString()
+        },
+        {
+          id: 'usr_demo_2',
+          email: 'eri@resiste.com',
+          password: 'password123',
+          user_metadata: { nombre: 'Eri Valladolid' },
+          app_metadata: { provider: 'email' },
+          aud: 'authenticated',
+          created_at: new Date().toISOString()
+        },
+        {
+          id: 'usr_demo_3',
+          email: 'jhon@resiste.com',
+          password: 'password123',
+          user_metadata: { nombre: 'Jhon Rivas' },
+          app_metadata: { provider: 'email' },
+          aud: 'authenticated',
+          created_at: new Date().toISOString()
+        }
+      ];
+
+      if (!localStorage.getItem('resiste_registered_users')) {
+        localStorage.setItem('resiste_registered_users', JSON.stringify(defaultDemoUsers));
+      }
+
       const sessionData = localStorage.getItem('resiste_session');
       if (sessionData) {
         try {

@@ -26,6 +26,12 @@ export class LoginComponent implements OnInit {
     }
   }
 
+  fillDemo(demoEmail: string = 'demo@resiste.com'): void {
+    this.email.set(demoEmail);
+    this.password.set('password123');
+    this.errorMessage.set(null);
+  }
+
   async onSubmit() {
     if (!this.email() || !this.password()) {
       this.errorMessage.set('Por favor completa todos los campos.');
