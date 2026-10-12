@@ -314,7 +314,7 @@
                         {{ sesion.tipos_actividad?.nombre || 'Entrenamiento' }}
                       </h3>
                       <span class="session-date">
-                        <i class="bi bi-calendar-event"></i> {{ sesion.fecha | date:'fullDate':'':'es-MX' }}
+                        <i class="bi bi-calendar-event"></i> {{ formatDate(sesion.fecha) }}
                       </span>
                     </div>
                   </div>

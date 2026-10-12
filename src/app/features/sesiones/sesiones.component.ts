@@ -225,4 +225,20 @@ export class SesionesComponent implements OnInit {
     if (val <= 8) return { label: 'Intenso / Fuerte', color: '#f97316' };
     return { label: 'Máximo / Extenuante', color: '#ef4444' };
   }
+
+  formatDate(fecha: string): string {
+    if (!fecha) return '';
+    try {
+      const [year, month, day] = fecha.split('-').map(Number);
+      const d = new Date(year, month - 1, day);
+      return d.toLocaleDateString('es-MX', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+    } catch {
+      return fecha;
+    }
+  }
 }
