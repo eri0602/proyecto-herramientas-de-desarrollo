@@ -2,36 +2,42 @@
   <!-- Header -->
   <header class="page-header">
     <div class="header-left">
-      <a routerLink="/dashboard" class="btn-back">← Dashboard</a>
       <h1>Mis Sesiones</h1>
-      <p class="subtitle">Registra y gestiona tu historial de entrenamiento</p>
+      <p class="subtitle">Registra y gestiona tu historial de entrenamiento de resistencia</p>
     </div>
     <button class="btn-primary" (click)="abrirFormularioNuevo()">
-      + Nueva Sesión
+      <i class="bi bi-plus-lg"></i>
+      <span>Nueva Sesión</span>
     </button>
   </header>
 
   <!-- Alertas globales -->
   @if (exito()) {
-    <div class="alert alert-success">✓ {{ exito() }}</div>
+    <div class="alert alert-success">
+      <i class="bi bi-check-circle-fill"></i>
+      <span>{{ exito() }}</span>
+    </div>
   }
   @if (error() && !mostrarFormulario()) {
-    <div class="alert alert-error">✕ {{ error() }}</div>
+    <div class="alert alert-error">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <span>{{ error() }}</span>
+    </div>
   }
 
   <!-- Stats -->
   <div class="stats-row">
     <div class="stat-card">
       <span class="stat-value">{{ totalSesiones() }}</span>
-      <span class="stat-label">Sesiones</span>
+      <span class="stat-label"><i class="bi bi-calendar2-check"></i> Sesiones</span>
     </div>
     <div class="stat-card">
       <span class="stat-value">{{ totalHoras() }}h</span>
-      <span class="stat-label">Total horas</span>
+      <span class="stat-label"><i class="bi bi-clock-history"></i> Total horas</span>
     </div>
     <div class="stat-card">
       <span class="stat-value">{{ esfuerzoPromedio() }}/10</span>
-      <span class="stat-label">Esfuerzo prom.</span>
+      <span class="stat-label"><i class="bi bi-speedometer2"></i> Esfuerzo prom.</span>
     </div>
   </div>
 
@@ -41,11 +47,16 @@
       <div class="modal-card" (click)="$event.stopPropagation()">
         <div class="modal-header">
           <h2>{{ editando() ? 'Editar Sesión' : 'Nueva Sesión' }}</h2>
-          <button class="btn-close" (click)="cancelar()">✕</button>
+          <button class="btn-close" (click)="cancelar()" aria-label="Cerrar">
+            <i class="bi bi-x-lg"></i>
+          </button>
         </div>
 
         @if (error()) {
-          <div class="alert alert-error">✕ {{ error() }}</div>
+          <div class="alert alert-error">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span>{{ error() }}</span>
+          </div>
         }
 
         <form [formGroup]="form" (ngSubmit)="guardar()" class="form-grid">
@@ -148,9 +159,14 @@
   <!-- Filtros -->
   <section class="card filtros-card">
     <div class="filtros-header">
-      <h2>Filtros</h2>
+      <div class="filtros-title">
+        <i class="bi bi-funnel-fill"></i>
+        <h2>Filtros</h2>
+      </div>
       @if (filtroTipo() || filtroFechaDesde() || filtroFechaHasta()) {
-        <button class="btn-clear" (click)="limpiarFiltros()">Limpiar filtros</button>
+        <button class="btn-clear" (click)="limpiarFiltros()">
+          <i class="bi bi-x-circle"></i> Limpiar filtros
+        </button>
       }
     </div>
     <div class="filtros-grid">
@@ -183,9 +199,11 @@
       </div>
     } @else if (sesionesFiltradasComputed().length === 0) {
       <div class="empty-state">
-        <span class="empty-icon">🏃</span>
+        <i class="bi bi-inbox empty-icon"></i>
         <p>No hay sesiones registradas aún.</p>
-        <button class="btn-primary" (click)="abrirFormularioNuevo()">Registrar primera sesión</button>
+        <button class="btn-primary" (click)="abrirFormularioNuevo()">
+          <i class="bi bi-plus-lg"></i> Registrar primera sesión
+        </button>
       </div>
     } @else {
       <div class="sessions-grid">
@@ -196,22 +214,26 @@
                 <span class="tipo-badge">{{ getNombreTipo(sesion.tipo_actividad_id) }}</span>
               </div>
               <div class="session-actions">
-                <button class="btn-icon btn-edit" (click)="abrirEditar(sesion)" title="Editar">✏️</button>
-                <button class="btn-icon btn-danger" (click)="eliminar(sesion)" title="Eliminar">🗑</button>
+                <button class="btn-icon btn-edit" (click)="abrirEditar(sesion)" title="Editar">
+                  <i class="bi bi-pencil-square"></i>
+                </button>
+                <button class="btn-icon btn-danger" (click)="eliminar(sesion)" title="Eliminar">
+                  <i class="bi bi-trash3-fill"></i>
+                </button>
               </div>
             </div>
 
             <div class="session-body">
               <div class="session-stat">
-                <span class="s-label">📅 Fecha</span>
+                <span class="s-label"><i class="bi bi-calendar3"></i> Fecha</span>
                 <span class="s-value">{{ sesion.fecha }}</span>
               </div>
               <div class="session-stat">
-                <span class="s-label">⏱ Duración</span>
+                <span class="s-label"><i class="bi bi-clock"></i> Duración</span>
                 <span class="s-value">{{ sesion.duracion_min }} min</span>
               </div>
               <div class="session-stat">
-                <span class="s-label">💥 Esfuerzo</span>
+                <span class="s-label"><i class="bi bi-speedometer2"></i> Esfuerzo</span>
                 <span class="s-value esfuerzo-badge" [style.color]="getEsfuerzoColor(sesion.esfuerzo_percibido)">
                   {{ sesion.esfuerzo_percibido }}/10
                 </span>
@@ -219,7 +241,9 @@
             </div>
 
             @if (sesion.notas) {
-              <p class="session-notas">💬 {{ sesion.notas }}</p>
+              <p class="session-notas">
+                <i class="bi bi-chat-left-text"></i> {{ sesion.notas }}
+              </p>
             }
 
             <!-- Barra de esfuerzo -->

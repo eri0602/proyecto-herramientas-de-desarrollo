@@ -1,0 +1,209 @@
+<div class="page-container">
+  <!-- Header -->
+  <header class="page-header">
+    <div class="header-left">
+      <a routerLink="/dashboard" class="btn-back">← Volver al Dashboard</a>
+      <h1>🎯 Mi Meta de Resistencia</h1>
+      <p class="subtitle">Define tu plan de resistencia física y monitorea tu progreso semanal</p>
+    </div>
+    @if (!loading() && metaActual() && !editando()) {
+      <div class="header-actions">
+        <button class="btn btn-secondary" (click)="iniciarEdicion()">
+          ✏️ Modificar Meta
+        </button>
+      </div>
+    }
+  </header>
+
+  <!-- Mensajes de alerta -->
+  @if (mensajeExito()) {
+    <div class="alert alert-success">
+      <span>✅</span> {{ mensajeExito() }}
+    </div>
+  }
+
+  @if (error()) {
+    <div class="alert alert-danger">
+      <span>⚠️</span> {{ error() }}
+    </div>
+  }
+
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Cargando información de tu meta...</p>
+    </div>
+  } @else {
+
+    <!-- Vista de Resumen / Meta Activa -->
+    @if (metaActual() && !editando()) {
+      <div class="meta-dashboard">
+        <!-- Tarjeta principal de la meta -->
+        <div class="main-card hero-meta-card">
+          <div class="meta-badge-row">
+            <span class="badge badge-discipline">🏃 {{ metaActual()?.tipo_resistencia }}</span>
+            <span class="badge badge-level">Nivel {{ metaActual()?.nivel_inicial | titlecase }}</span>
+            <span class="badge badge-active">🟢 Meta Activa</span>
+          </div>
+
+          <h2 class="hero-title">
+            Objetivo: {{ metaActual()?.horas_objetivo_semanales }}h semanales
+          </h2>
+          <p class="hero-description">
+            Programa diseñado para un plazo de <strong>{{ metaActual()?.plazo_semanas }} semanas</strong>,
+            enfocado en resistencia aeróbica continua.
+          </p>
+
+          <!-- Estadísticas destacadas -->
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <span class="metric-icon">⏱️</span>
+              <div class="metric-info">
+                <span class="metric-value">{{ metaActual()?.horas_objetivo_semanales }} h</span>
+                <span class="metric-label">Por semana</span>
+              </div>
+            </div>
+
+            <div class="metric-card">
+              <span class="metric-icon">📅</span>
+              <div class="metric-info">
+                <span class="metric-value">{{ metaActual()?.plazo_semanas }}</span>
+                <span class="metric-label">Semanas de plan</span>
+              </div>
+            </div>
+
+            <div class="metric-card">
+              <span class="metric-icon">🏁</span>
+              <div class="metric-info">
+                <span class="metric-value">{{ calcularTotalHoras() }} h</span>
+                <span class="metric-label">Horas proyectadas</span>
+              </div>
+            </div>
+
+            <div class="metric-card">
+              <span class="metric-icon">🎯</span>
+              <div class="metric-info">
+                <span class="metric-value">{{ calcularFechaFin() }}</span>
+                <span class="metric-label">Fecha de culminación</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Consejos de preparación según nivel -->
+        <div class="info-card">
+          <h3>💡 Recomendación de ritmo</h3>
+          <p class="info-text">
+            Con <strong>{{ metaActual()?.horas_objetivo_semanales }} horas por semana</strong>, 
+            una distribución óptima es de <strong>3 a 4 sesiones</strong> semanales de entre 45 y 60 minutos,
+            manteniendo un nivel de esfuerzo percibido entre 5 y 7.
+          </p>
+        </div>
+      </div>
+    }
+
+    <!-- Formulario para Crear o Editar Meta -->
+    @if (editando()) {
+      <div class="form-container">
+        <div class="form-card">
+          <div class="form-header">
+            <h2>{{ metaActual() ? '✏️ Actualizar tu Meta' : '🚀 Configura tu Primera Meta' }}</h2>
+            <p>Ajusta los parámetros para adaptar el seguimiento a tu condición actual.</p>
+          </div>
+
+          <form [formGroup]="form" (ngSubmit)="guardar()">
+            <!-- Tipo de resistencia -->
+            <div class="form-group">
+              <label for="tipo_resistencia">Disciplina / Actividad Principal</label>
+              <select id="tipo_resistencia" formControlName="tipo_resistencia" class="form-control">
+                @for (tipo of tiposResistencia; track tipo) {
+                  <option [value]="tipo">{{ tipo }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Nivel inicial -->
+            <div class="form-group">
+              <label for="nivel_inicial">Nivel Inicial</label>
+              <select id="nivel_inicial" formControlName="nivel_inicial" class="form-control">
+                @for (nivel of niveles; track nivel.id) {
+                  <option [value]="nivel.id">{{ nivel.label }} — {{ nivel.desc }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Grid de parámetros numéricos -->
+            <div class="form-row">
+              <div class="form-group col">
+                <label for="horas_objetivo_semanales">Horas Objetivo por Semana (h)</label>
+                <input
+                  type="number"
+                  id="horas_objetivo_semanales"
+                  formControlName="horas_objetivo_semanales"
+                  class="form-control"
+                  min="0.5"
+                  max="40"
+                  step="0.5"
+                  placeholder="ej. 3.5"
+                />
+                @if (form.get('horas_objetivo_semanales')?.invalid && form.get('horas_objetivo_semanales')?.touched) {
+                  <span class="field-error">Ingresa un valor entre 0.5 y 40 horas.</span>
+                }
+              </div>
+
+              <div class="form-group col">
+                <label for="plazo_semanas">Plazo del Plan (Semanas)</label>
+                <input
+                  type="number"
+                  id="plazo_semanas"
+                  formControlName="plazo_semanas"
+                  class="form-control"
+                  min="1"
+                  max="52"
+                  placeholder="ej. 8"
+                />
+                @if (form.get('plazo_semanas')?.invalid && form.get('plazo_semanas')?.touched) {
+                  <span class="field-error">Ingresa entre 1 y 52 semanas.</span>
+                }
+              </div>
+            </div>
+
+            <!-- Fecha de inicio -->
+            <div class="form-group">
+              <label for="fecha_inicio">Fecha de Inicio</label>
+              <input
+                type="date"
+                id="fecha_inicio"
+                formControlName="fecha_inicio"
+                class="form-control"
+              />
+            </div>
+
+            <!-- Botones de Acción -->
+            <div class="form-actions">
+              @if (metaActual()) {
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  (click)="cancelarEdicion()"
+                  [disabled]="guardando()"
+                >
+                  Cancelar
+                </button>
+              }
+              <button
+                type="submit"
+                class="btn btn-primary"
+                [disabled]="form.invalid || guardando()"
+              >
+                {{ guardando() ? 'Guardando...' : (metaActual() ? 'Actualizar Meta' : 'Establecer Meta') }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    }
+
+  }
+</div>

@@ -2,6 +2,8 @@ import { Injectable, inject, signal } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { Router } from '@angular/router';
 
+const DEMO_STORAGE_KEY = 'resiste_demo_user';
+
 @Injectable({
   providedIn: 'root'
 })
@@ -12,24 +14,61 @@ export class AuthService {
   currentUser = signal<any>(null);
 
   constructor() {
+    // Restaurar usuario demo si existe en almacenamiento local
+    const demoUser = localStorage.getItem(DEMO_STORAGE_KEY);
+    if (demoUser) {
+      try {
+        this.currentUser.set(JSON.parse(demoUser));
+      } catch {
+        localStorage.removeItem(DEMO_STORAGE_KEY);
+      }
+    }
+
     // Inicializar sesión desde Supabase
-    this.supabase.auth.getSession().then(({ data }) => {
-      this.currentUser.set(data.session?.user ?? null);
-    });
+    try {
+      this.supabase.auth.getSession().then(({ data }) => {
+        if (data?.session?.user) {
+          this.currentUser.set(data.session.user);
+          localStorage.removeItem(DEMO_STORAGE_KEY);
+        }
+      }).catch(() => {
+        // Modo offline / demo
+      });
+    } catch {
+      // ignore
+    }
 
     // Escuchar cambios de auth
-    this.supabase.auth.onAuthStateChange((_event, session) => {
-      this.currentUser.set(session?.user ?? null);
-    });
+    try {
+      this.supabase.auth.onAuthStateChange((_event, session) => {
+        if (session?.user) {
+          this.currentUser.set(session.user);
+          localStorage.removeItem(DEMO_STORAGE_KEY);
+        }
+      });
+    } catch {
+      // ignore
+    }
   }
 
   isAuthenticated(): boolean {
     return this.currentUser() !== null;
   }
 
+  loginDemo() {
+    const usuarioDemo = {
+      id: 'demo-user',
+      email: 'demo@resiste.app',
+      user_metadata: { nombre: 'Atleta Demo' }
+    };
+    this.currentUser.set(usuarioDemo);
+    localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify(usuarioDemo));
+  }
+
   async login(email: string, password: string) {
     const { data, error } = await this.supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
+    localStorage.removeItem(DEMO_STORAGE_KEY);
     return data;
   }
 
@@ -44,7 +83,12 @@ export class AuthService {
   }
 
   async logout() {
-    await this.supabase.auth.signOut();
+    try {
+      await this.supabase.auth.signOut();
+    } catch {
+      // ignore
+    }
+    localStorage.removeItem(DEMO_STORAGE_KEY);
     this.currentUser.set(null);
     this.router.navigate(['/login']);
   }
