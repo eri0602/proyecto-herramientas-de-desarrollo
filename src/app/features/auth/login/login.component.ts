@@ -39,7 +39,8 @@ export class LoginComponent {
   }
 
   // Modo demo sin Supabase
-  async loginDemo() {
+  loginDemo() {
+    this.authService.loginDemo();
     this.router.navigate(['/dashboard']);
   }
 }

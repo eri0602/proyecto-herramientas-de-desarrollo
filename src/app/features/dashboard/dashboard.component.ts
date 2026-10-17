@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { SesionesService } from '../../core/services/sesiones.service';
 import { SupabaseService } from '../../core/services/supabase.service';
+import { AuthService } from '../../core/services/auth.service';
 import { Sesion } from '../../core/models/sesion.model';
 
 interface SemanaStats {
@@ -22,6 +23,11 @@ interface SemanaStats {
 export class DashboardComponent implements OnInit {
   private sesionesService = inject(SesionesService);
   private supabaseService = inject(SupabaseService);
+  private authService = inject(AuthService);
+
+  logout() {
+    this.authService.logout();
+  }
 
   sesiones = signal<Sesion[]>([]);
   loading = signal(true);
@@ -41,7 +47,7 @@ export class DashboardComponent implements OnInit {
 
       const userId: string = data.session?.user?.id ?? 'demo-user';
       const sesionesData = await this.sesionesService.getSesiones(userId);
-      this.sesiones.set(sesionesData);
+      this.sesiones.set(sesionesData && sesionesData.length > 0 ? sesionesData : this.getDemoSesiones());
     } catch {
       // fallback — datos de demo si no hay sesiones o no hay sesión activa
       this.sesiones.set(this.getDemoSesiones());

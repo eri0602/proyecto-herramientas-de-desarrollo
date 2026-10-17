@@ -1,73 +1,146 @@
-<div class="auth-container">
-  <div class="auth-card">
-    <div class="auth-brand">
-      <span class="brand-icon">🏃</span>
-      <h1 class="brand-name">Resiste</h1>
-      <p class="brand-tagline">Comienza tu camino hoy</p>
+<div class="auth-page">
+  <!-- Hero Panel -->
+  <div class="hero-panel">
+    <div class="hero-content">
+      <div class="hero-brand">
+        <span class="hero-logo"><i class="bi bi-activity"></i></span>
+        <h1 class="hero-title">Resiste</h1>
+      </div>
+      <p class="hero-headline">
+        Comienza a construir tu <span class="highlight">resistencia</span> hoy
+      </p>
+      <p class="hero-sub">
+        Únete a Resiste y empieza a monitorear tu progreso deportivo 
+        con sesiones detalladas, metas semanales y estadísticas en tiempo real.
+      </p>
+
+      <!-- Features -->
+      <div class="features-list">
+        <div class="feature-item">
+          <div class="feature-icon"><i class="bi bi-lightning-charge-fill"></i></div>
+          <div class="feature-text">
+            <strong>Empieza rápido</strong>
+            <span>Crea tu cuenta en segundos y configura tu primera meta</span>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon"><i class="bi bi-graph-up-arrow"></i></div>
+          <div class="feature-text">
+            <strong>Progreso visible</strong>
+            <span>Visualiza tu evolución semana a semana con gráficos claros</span>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon"><i class="bi bi-trophy-fill"></i></div>
+          <div class="feature-text">
+            <strong>Alcanza tus metas</strong>
+            <span>Establece objetivos realistas y cúmplelos con disciplina</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-footer">
+        <i class="bi bi-shield-lock-fill"></i>
+        <span>Registro gratuito — sin compromisos</span>
+      </div>
     </div>
 
-    <h2 class="form-title">Crear cuenta</h2>
+    <!-- Background decorations -->
+    <div class="hero-bg-circle hero-bg-1"></div>
+    <div class="hero-bg-circle hero-bg-2"></div>
+    <div class="hero-bg-circle hero-bg-3"></div>
+  </div>
 
-    @if (exito()) {
-      <div class="alert alert-success">✓ ¡Cuenta creada! Redirigiendo...</div>
-    }
-    @if (error()) {
-      <div class="alert alert-error">✕ {{ error() }}</div>
-    }
-
-    <form [formGroup]="form" (ngSubmit)="register()" class="auth-form">
-      <div class="field-group">
-        <label for="nombre">Nombre</label>
-        <input
-          id="nombre"
-          type="text"
-          formControlName="nombre"
-          class="input-field"
-          placeholder="Tu nombre"
-          [class.invalid]="form.controls['nombre'].invalid && form.controls['nombre'].touched"
-        />
-        @if (form.controls['nombre'].invalid && form.controls['nombre'].touched) {
-          <span class="field-error">Mínimo 2 caracteres</span>
-        }
+  <!-- Form Panel -->
+  <div class="form-panel">
+    <div class="form-wrapper">
+      <!-- Mobile only brand -->
+      <div class="mobile-brand">
+        <span class="brand-icon"><i class="bi bi-activity"></i></span>
+        <h1 class="brand-name">Resiste</h1>
+        <p class="brand-tagline">Seguimiento de resistencia física</p>
       </div>
 
-      <div class="field-group">
-        <label for="email">Correo electrónico</label>
-        <input
-          id="email"
-          type="email"
-          formControlName="email"
-          class="input-field"
-          placeholder="tu@correo.com"
-          [class.invalid]="form.controls['email'].invalid && form.controls['email'].touched"
-        />
-        @if (form.controls['email'].invalid && form.controls['email'].touched) {
-          <span class="field-error">Ingresa un correo válido</span>
-        }
-      </div>
+      <h2 class="form-title">Crea tu cuenta</h2>
+      <p class="form-subtitle">Empieza a registrar tu entrenamiento de resistencia</p>
 
-      <div class="field-group">
-        <label for="password">Contraseña</label>
-        <input
-          id="password"
-          type="password"
-          formControlName="password"
-          class="input-field"
-          placeholder="Mínimo 6 caracteres"
-          [class.invalid]="form.controls['password'].invalid && form.controls['password'].touched"
-        />
-        @if (form.controls['password'].invalid && form.controls['password'].touched) {
-          <span class="field-error">Mínimo 6 caracteres</span>
-        }
-      </div>
+      @if (exito()) {
+        <div class="alert alert-success">
+          <i class="bi bi-check-circle-fill"></i>
+          <span>¡Cuenta creada exitosamente! Redirigiendo...</span>
+        </div>
+      }
+      @if (error()) {
+        <div class="alert alert-error">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <span>{{ error() }}</span>
+        </div>
+      }
 
-      <button type="submit" class="btn-primary" [disabled]="loading()">
-        @if (loading()) { Creando cuenta... } @else { Crear cuenta }
-      </button>
-    </form>
+      <form [formGroup]="form" (ngSubmit)="register()" class="auth-form">
+        <div class="field-group">
+          <label for="nombre">
+            <i class="bi bi-person-fill"></i> Nombre
+          </label>
+          <input
+            id="nombre"
+            type="text"
+            formControlName="nombre"
+            class="input-field"
+            placeholder="Tu nombre"
+            [class.invalid]="form.controls['nombre'].invalid && form.controls['nombre'].touched"
+          />
+          @if (form.controls['nombre'].invalid && form.controls['nombre'].touched) {
+            <span class="field-error">Mínimo 2 caracteres</span>
+          }
+        </div>
 
-    <p class="auth-link">
-      ¿Ya tienes cuenta? <a routerLink="/login">Iniciar sesión</a>
-    </p>
+        <div class="field-group">
+          <label for="email">
+            <i class="bi bi-envelope-fill"></i> Correo electrónico
+          </label>
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            class="input-field"
+            placeholder="tu@correo.com"
+            [class.invalid]="form.controls['email'].invalid && form.controls['email'].touched"
+          />
+          @if (form.controls['email'].invalid && form.controls['email'].touched) {
+            <span class="field-error">Ingresa un correo válido</span>
+          }
+        </div>
+
+        <div class="field-group">
+          <label for="password">
+            <i class="bi bi-lock-fill"></i> Contraseña
+          </label>
+          <input
+            id="password"
+            type="password"
+            formControlName="password"
+            class="input-field"
+            placeholder="Mínimo 6 caracteres"
+            [class.invalid]="form.controls['password'].invalid && form.controls['password'].touched"
+          />
+          @if (form.controls['password'].invalid && form.controls['password'].touched) {
+            <span class="field-error">Mínimo 6 caracteres</span>
+          }
+        </div>
+
+        <button type="submit" class="btn-primary" [disabled]="loading()">
+          @if (loading()) {
+            <i class="bi bi-arrow-repeat spin-icon"></i> Creando cuenta...
+          } @else {
+            <i class="bi bi-person-plus-fill"></i> Crear cuenta
+          }
+        </button>
+      </form>
+
+      <p class="auth-link">
+        ¿Ya tienes cuenta? <a routerLink="/login">Iniciar sesión</a>
+      </p>
+    </div>
   </div>
 </div>

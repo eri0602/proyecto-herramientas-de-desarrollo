@@ -1,24 +1,24 @@
 <div class="page-container">
   <header class="page-header">
     <div class="header-left">
-      <a routerLink="/dashboard" class="btn-back">
-        <span class="icon">←</span> Dashboard
-      </a>
       <h1>Tipos de Actividad</h1>
-      <p class="subtitle">Gestiona los tipos de entrenamiento disponibles</p>
+      <p class="subtitle">Gestiona las disciplinas y categorías de entrenamiento</p>
     </div>
   </header>
 
   <!-- Formulario agregar -->
   <section class="card form-card">
-    <h2>Agregar tipo de actividad</h2>
+    <div class="card-title-group">
+      <i class="bi bi-plus-circle-fill card-title-icon"></i>
+      <h2>Agregar tipo de actividad</h2>
+    </div>
     <form [formGroup]="form" (ngSubmit)="guardar()" class="inline-form">
       <div class="field-group">
         <input
           id="nombre-tipo"
           type="text"
           formControlName="nombre"
-          placeholder="Ej: Carrera, Ciclismo..."
+          placeholder="Ej: Running, Ciclismo, Natación..."
           class="input-field"
           [class.invalid]="form.controls['nombre'].invalid && form.controls['nombre'].touched"
         />
@@ -30,43 +30,60 @@
         }
       </div>
       <button type="submit" class="btn-primary" [disabled]="form.invalid || guardando()">
-        @if (guardando()) { Guardando... } @else { + Agregar }
+        @if (guardando()) {
+          Guardando...
+        } @else {
+          <i class="bi bi-plus-lg"></i>
+          <span>Agregar</span>
+        }
       </button>
     </form>
 
     @if (exito()) {
-      <div class="alert alert-success">✓ {{ exito() }}</div>
+      <div class="alert alert-success">
+        <i class="bi bi-check-circle-fill"></i>
+        <span>{{ exito() }}</span>
+      </div>
     }
     @if (error()) {
-      <div class="alert alert-error">✕ {{ error() }}</div>
+      <div class="alert alert-error">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span>{{ error() }}</span>
+      </div>
     }
   </section>
 
   <!-- Lista -->
   <section class="card list-card">
-    <h2>Tipos disponibles</h2>
+    <div class="card-title-group">
+      <i class="bi bi-tags-fill card-title-icon"></i>
+      <h2>Tipos disponibles</h2>
+    </div>
 
     @if (loading()) {
       <div class="loading-state">
         <div class="spinner"></div>
-        <span>Cargando...</span>
+        <span>Cargando tipos de actividad...</span>
       </div>
     } @else if (tipos().length === 0) {
       <div class="empty-state">
-        <span class="empty-icon">🏃</span>
+        <i class="bi bi-tags empty-icon"></i>
         <p>No hay tipos de actividad aún. ¡Agrega el primero!</p>
       </div>
     } @else {
       <ul class="tipos-list">
         @for (tipo of tipos(); track tipo.id) {
           <li class="tipo-item">
-            <span class="tipo-nombre">{{ tipo.nombre }}</span>
+            <span class="tipo-nombre">
+              <i class="bi bi-bookmark-check text-sky"></i>
+              {{ tipo.nombre }}
+            </span>
             <button
               class="btn-icon btn-danger"
               (click)="eliminar(tipo.id!, tipo.nombre)"
               title="Eliminar"
             >
-              🗑
+              <i class="bi bi-trash3-fill"></i>
             </button>
           </li>
         }
