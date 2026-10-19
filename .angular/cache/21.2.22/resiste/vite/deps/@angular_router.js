@@ -1,6 +1,10 @@
 import {
   Title
+<<<<<<< Updated upstream
 } from "./chunk-ORRY3PQY.js";
+=======
+} from "./chunk-333BEL4U.js";
+>>>>>>> Stashed changes
 import {
   HashLocationStrategy,
   LOCATION_INITIALIZED,
@@ -12,12 +16,19 @@ import {
   PlatformLocation,
   PlatformNavigation,
   ViewportScroller
+<<<<<<< Updated upstream
 } from "./chunk-KYST5UY3.js";
+=======
+} from "./chunk-7HNXSFUO.js";
+>>>>>>> Stashed changes
 import {
   APP_BOOTSTRAP_LISTENER,
   ApplicationRef,
   Attribute,
+<<<<<<< Updated upstream
   BehaviorSubject,
+=======
+>>>>>>> Stashed changes
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Compiler,
@@ -27,10 +38,15 @@ import {
   DOCUMENT,
   DestroyRef,
   Directive,
+<<<<<<< Updated upstream
   EMPTY,
   ENVIRONMENT_INITIALIZER,
   ElementRef,
   EmptyError,
+=======
+  ENVIRONMENT_INITIALIZER,
+  ElementRef,
+>>>>>>> Stashed changes
   EnvironmentInjector,
   EventEmitter,
   HostAttributeToken,
@@ -45,17 +61,24 @@ import {
   NgModule,
   NgModuleFactory$1,
   NgZone,
+<<<<<<< Updated upstream
   Observable,
+=======
+>>>>>>> Stashed changes
   Output,
   PendingTasksInternal,
   Renderer2,
   RuntimeError,
+<<<<<<< Updated upstream
   Subject,
   Subscription,
+=======
+>>>>>>> Stashed changes
   Version,
   ViewContainerRef,
   afterNextRender,
   booleanAttribute,
+<<<<<<< Updated upstream
   catchError,
   combineLatest,
   computed,
@@ -69,6 +92,13 @@ import {
   first,
   formatRuntimeError,
   from,
+=======
+  computed,
+  createEnvironmentInjector,
+  defer,
+  effect,
+  formatRuntimeError,
+>>>>>>> Stashed changes
   inject,
   input,
   isInjectable,
@@ -78,12 +108,16 @@ import {
   isStandalone,
   linkedSignal,
   makeEnvironmentProviders,
+<<<<<<< Updated upstream
   map,
   mergeAll,
   mergeMap,
   of,
   performanceMarkFeature,
   pipe,
+=======
+  performanceMarkFeature,
+>>>>>>> Stashed changes
   promiseWithResolvers,
   provideAppInitializer,
   provideEnvironmentInitializer,
@@ -92,6 +126,7 @@ import {
   runInInjectionContext,
   setClassMetadata,
   signal,
+<<<<<<< Updated upstream
   startWith,
   switchMap,
   take,
@@ -99,6 +134,8 @@ import {
   takeUntil,
   tap,
   throwError,
+=======
+>>>>>>> Stashed changes
   untracked,
   ɵɵNgOnChangesFeature,
   ɵɵattribute,
@@ -118,11 +155,48 @@ import {
   ɵɵloadQuery,
   ɵɵqueryRefresh,
   ɵɵsanitizeUrlOrResourceUrl
+<<<<<<< Updated upstream
 } from "./chunk-LPP4UT6V.js";
 import {
   __spreadProps,
   __spreadValues
 } from "./chunk-GY2V2KO6.js";
+=======
+} from "./chunk-KXNNKVLU.js";
+import {
+  BehaviorSubject,
+  EMPTY,
+  EmptyError,
+  Observable,
+  Subject,
+  Subscription,
+  catchError,
+  combineLatest,
+  concat2 as concat,
+  concatMap,
+  filter,
+  finalize,
+  first,
+  from,
+  map,
+  mergeAll,
+  mergeMap,
+  of,
+  pipe,
+  startWith,
+  switchMap,
+  take,
+  takeLast,
+  takeUntil,
+  tap,
+  throwError
+} from "./chunk-CBXL5XDY.js";
+import "./chunk-B2KI3AIV.js";
+import {
+  __spreadProps,
+  __spreadValues
+} from "./chunk-GOMI4DH3.js";
+>>>>>>> Stashed changes
 
 // node_modules/@angular/router/fesm2022/_router-chunk.mjs
 var PRIMARY_OUTLET = "primary";

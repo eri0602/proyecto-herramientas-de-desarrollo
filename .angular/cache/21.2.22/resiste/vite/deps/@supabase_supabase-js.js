@@ -1,8 +1,16 @@
 import {
   __awaiter,
+<<<<<<< Updated upstream
   __rest,
   __spreadValues
 } from "./chunk-GY2V2KO6.js";
+=======
+  __rest
+} from "./chunk-B2KI3AIV.js";
+import {
+  __spreadValues
+} from "./chunk-GOMI4DH3.js";
+>>>>>>> Stashed changes
 
 // node_modules/@supabase/supabase-js/dist/tracingRegistry.mjs
 var EXTRACTOR_KEY = /* @__PURE__ */ Symbol.for("@supabase/supabase-js.traceContextExtractor");
