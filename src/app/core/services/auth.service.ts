@@ -1,4 +1,9 @@
+<<<<<<< Updated upstream
 import { Injectable, inject, signal } from '@angular/core';
+=======
+import { Injectable, inject, signal, computed } from '@angular/core';
+import { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
+>>>>>>> Stashed changes
 import { SupabaseService } from './supabase.service';
 import { Router } from '@angular/router';
 
@@ -45,9 +50,41 @@ export class AuthService {
           this.currentUser.set(session.user);
           localStorage.removeItem(DEMO_STORAGE_KEY);
         }
+<<<<<<< Updated upstream
       });
     } catch {
       // ignore
+=======
+
+        this.supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
+          if (session?.user) {
+            this.currentUser.set(session.user);
+            await this.loadUserProfile(session.user.id);
+          } else {
+            this.currentUser.set(null);
+            this.currentProfile.set(null);
+          }
+        });
+      } catch (err) {
+        console.warn('Supabase no configurado o sin conexión:', err);
+      }
+    } else {
+      // Modo Local / Demo para presentación
+      const sessionData = localStorage.getItem('resiste_session');
+      if (sessionData) {
+        try {
+          const user = JSON.parse(sessionData);
+          this.currentUser.set(user as User);
+          this.currentProfile.set({
+            id: user.id,
+            nombre: user.user_metadata?.nombre || user.email.split('@')[0],
+            rol: 'usuario'
+          });
+        } catch {
+          localStorage.removeItem('resiste_session');
+        }
+      }
+>>>>>>> Stashed changes
     }
   }
 
