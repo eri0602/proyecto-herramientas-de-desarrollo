@@ -1,7 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { MetasService } from '../../core/services/metas.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { Meta } from '../../core/models/meta.model';
@@ -9,7 +8,7 @@ import { Meta } from '../../core/models/meta.model';
 @Component({
   selector: 'app-metas',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule],
   template: `
     <div class="page-container">
       <!-- Header -->

@@ -13,20 +13,6 @@ interface SemanaStats {
   esfuerzoPromedio: number;
 }
 
-interface NotificationItem {
-  id: number;
-  title: string;
-  body: string;
-  time: string;
-  read: boolean;
-}
-
-interface NotificationToast {
-  id: number;
-  text: string;
-  type: string;
-}
-
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -59,7 +45,6 @@ export class DashboardComponent implements OnInit {
         (data.session?.user?.user_metadata?.['nombre'] as string | undefined) ?? 'Atleta';
       this.userName.set(nombre);
 
-<<<<<<< Updated upstream
       const userId: string = data.session?.user?.id ?? 'demo-user';
       const sesionesData = await this.sesionesService.getSesiones(userId);
       this.sesiones.set(sesionesData && sesionesData.length > 0 ? sesionesData : this.getDemoSesiones());
@@ -68,49 +53,6 @@ export class DashboardComponent implements OnInit {
       this.sesiones.set(this.getDemoSesiones());
     } finally {
       this.loading.set(false);
-=======
-  // Sesiones reales del usuario
-  userSessions = signal<Sesion[]>([]);
-  targetWeeklyMinutes = signal(240); // 4 horas objetivo semanal base
-
-  readonly totalSessions = computed(() => this.userSessions().length);
-
-  readonly weeklyMinutes = computed(() => {
-    const sessions = this.userSessions();
-    if (sessions.length === 0) return 0;
-
-    const now = new Date();
-    // Obtener el inicio de la semana (Lunes)
-    const day = now.getDay();
-    const diff = (day === 0 ? -6 : 1) - day;
-    const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() + diff);
-    startOfWeek.setHours(0, 0, 0, 0);
-
-    return sessions
-      .filter((s: Sesion) => new Date(s.fecha + 'T00:00:00').getTime() >= startOfWeek.getTime())
-      .reduce((sum: number, s: Sesion) => sum + (s.duracion_min || 0), 0);
-  });
-
-  readonly totalMinutes = computed(() => {
-    return this.userSessions().reduce((sum: number, s: Sesion) => sum + (s.duracion_min || 0), 0);
-  });
-
-  readonly streakDays = computed(() => {
-    const sessions = this.userSessions();
-    if (sessions.length === 0) return 0;
-
-    const dates = Array.from(new Set(sessions.map((s: Sesion) => s.fecha))).sort().reverse();
-    let streak = 0;
-    const todayStr = new Date().toISOString().split('T')[0];
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split('T')[0];
-
-    // Verificar si entrenó hoy o ayer
-    if (dates[0] !== todayStr && dates[0] !== yesterdayStr) {
-      return 0;
->>>>>>> Stashed changes
     }
   }
 
@@ -182,7 +124,6 @@ export class DashboardComponent implements OnInit {
         ? +(sesSemana.reduce((acc, s) => acc + s.esfuerzo_percibido, 0) / sesSemana.length).toFixed(1)
         : 0;
 
-<<<<<<< Updated upstream
       resultado.push({
         semana: `S${8 - i}`,
         horas,
@@ -191,37 +132,6 @@ export class DashboardComponent implements OnInit {
       });
     }
     return resultado;
-=======
-  // Notificaciones Toast y Centro de Notificaciones
-  notifications = signal<NotificationToast[]>([]);
-  showNotifDropdown = signal(false);
-  notificationHistory = signal<NotificationItem[]>([
-    {
-      id: 1,
-      title: '¡Hora de entrenar! 💪',
-      body: 'Recuerda: Tu sesión de resistencia física te espera hoy.',
-      time: 'Hace 5 min',
-      read: false
-    },
-    {
-      id: 2,
-      title: 'Progreso Semanal ⚡',
-      body: '¡Buen ritmo! Sigue sumando minutos hacia tu meta.',
-      time: 'Hace 2 horas',
-      read: false
-    },
-    {
-      id: 3,
-      title: 'Consejo del Coach 💡',
-      body: 'La consistencia supera a la intensidad. ¡No pares!',
-      time: 'Ayer',
-      read: true
-    }
-  ]);
-
-  readonly unreadCount = computed(() => {
-    return this.notificationHistory().filter((n: NotificationItem) => !n.read).length;
->>>>>>> Stashed changes
   });
 
   maxHorasSemana = computed(() =>
@@ -248,20 +158,11 @@ export class DashboardComponent implements OnInit {
     return '#38bdf8';
   }
 
-<<<<<<< Updated upstream
   getEsfuerzoColor(val: number): string {
     if (val <= 3) return '#4ade80';
     if (val <= 6) return '#facc15';
     if (val <= 8) return '#fb923c';
     return '#f87171';
-=======
-  showNotification(text: string, type: 'motivational' | 'info'): void {
-    const id = Date.now();
-    this.notifications.update((n: NotificationToast[]) => [...n, { id, text, type }]);
-    setTimeout(() => {
-      this.notifications.update((n: NotificationToast[]) => n.filter((notif: NotificationToast) => notif.id !== id));
-    }, 8000);
->>>>>>> Stashed changes
   }
 
   getProgresColor(): string {
@@ -307,7 +208,6 @@ export class DashboardComponent implements OnInit {
     return dia.toLocaleDateString('es', { weekday: 'long', day: 'numeric' });
   }
 
-<<<<<<< Updated upstream
   getDiaLetra(offsetDesdeLunes: number): string {
     const dias = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
     return dias[offsetDesdeLunes];
@@ -328,34 +228,5 @@ export class DashboardComponent implements OnInit {
         notas: null
       };
     });
-=======
-  toggleNotifDropdown(): void {
-    this.showNotifDropdown.update((v: boolean) => !v);
-  }
-
-  markAllNotifsAsRead(): void {
-    this.notificationHistory.update((list: NotificationItem[]) => list.map((n: NotificationItem) => ({ ...n, read: true })));
-  }
-
-  triggerMotivationalToast(): void {
-    const randomQuote = this.quotes[Math.floor(Math.random() * this.quotes.length)];
-    this.showNotification(`¡Motivación para hoy! 🔥: ${randomQuote}`, 'motivational');
-  }
-
-  setProgress(val: number): void {
-    this.targetWeeklyMinutes.set(Math.round((this.weeklyMinutes() / (val || 1)) * 100) || 240);
-    const color = this.progressColor();
-    const status = this.progressStatus();
-    this.showNotification(`Progreso calculado: ${this.weekProgress()}% — Estado: ${status}`, 'info');
-  }
-
-  async logout(): Promise<void> {
-    await this.authService.signOut();
-    this.router.navigate(['/login']);
-  }
-
-  navigateTo(route: string): void {
-    console.log('Navigating to', route);
->>>>>>> Stashed changes
   }
 }

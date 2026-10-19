@@ -1,7 +1,6 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { SesionesService } from '../../core/services/sesiones.service';
 import { TiposActividadService } from '../../core/services/tipos-actividad.service';
 import { SupabaseService } from '../../core/services/supabase.service';
@@ -11,7 +10,7 @@ import { TipoActividad } from '../../core/models/tipo-actividad.model';
 @Component({
   selector: 'app-sesiones',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './sesiones.component.html',
   styleUrls: ['./sesiones.component.css']
 })
@@ -38,7 +37,6 @@ export class SesionesComponent implements OnInit {
   filtroFechaDesde = signal<string>('');
   filtroFechaHasta = signal<string>('');
 
-<<<<<<< Updated upstream
   // Formulario
   form = this.fb.group({
     tipo_actividad_id: ['', Validators.required],
@@ -53,71 +51,13 @@ export class SesionesComponent implements OnInit {
     let lista = this.sesiones();
 
     if (this.filtroTipo()) {
-      lista = lista.filter(s => s.tipo_actividad_id === this.filtroTipo());
-=======
-  formTipoActividadId = signal('');
-  formFecha = signal(new Date().toISOString().split('T')[0]);
-  formDuracionMin = signal(45);
-  formEsfuerzo = signal(6);
-  formNotas = signal('');
-
-  // Filtros de búsqueda para Historial (Semana 6)
-  filterTipoId = signal('TODOS');
-  filterSearch = signal('');
-  filterOrderBy = signal<'reciente' | 'duracion' | 'esfuerzo'>('reciente');
-
-  // Listado filtrado computado
-  filteredSesiones = computed(() => {
-    let list = this.sesiones();
-    const tipo = this.filterTipoId();
-    const query = this.filterSearch().toLowerCase().trim();
-    const order = this.filterOrderBy();
-
-    if (tipo !== 'TODOS') {
-      list = list.filter((s: Sesion) => s.tipo_actividad_id === tipo);
-    }
-
-    if (query) {
-      list = list.filter((s: Sesion) =>
-        (s.notas && s.notas.toLowerCase().includes(query)) ||
-        (s.tipos_actividad?.nombre && s.tipos_actividad.nombre.toLowerCase().includes(query))
-      );
-    }
-
-    return [...list].sort((a: Sesion, b: Sesion) => {
-      if (order === 'duracion') {
-        return b.duracion_min - a.duracion_min;
-      }
-      if (order === 'esfuerzo') {
-        return b.esfuerzo_percibido - a.esfuerzo_percibido;
-      }
-      return new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
-    });
-  });
-
-  // Métricas rápidas de las sesiones filtradas
-  totalMinutosFiltrados = computed(() => {
-    return this.filteredSesiones().reduce((acc: number, s: Sesion) => acc + (s.duracion_min || 0), 0);
-  });
-
-  promedioEsfuerzo = computed(() => {
-    const list = this.filteredSesiones();
-    if (list.length === 0) return 0;
-    const sum = list.reduce((acc: number, s: Sesion) => acc + (s.esfuerzo_percibido || 0), 0);
-    return Math.round((sum / list.length) * 10) / 10;
-  });
-
-  ngOnInit(): void {
-    if (!this.isAuthenticated()) {
-      this.router.navigate(['/login']);
-      return;
->>>>>>> Stashed changes
+      lista = lista.filter((s: Sesion) => s.tipo_actividad_id === this.filtroTipo());
     }
     if (this.filtroFechaDesde()) {
-      lista = lista.filter(s => s.fecha >= this.filtroFechaDesde());
+      lista = lista.filter((s: Sesion) => s.fecha >= this.filtroFechaDesde());
     }
     if (this.filtroFechaHasta()) {
-      lista = lista.filter(s => s.fecha <= this.filtroFechaHasta());
+      lista = lista.filter((s: Sesion) => s.fecha <= this.filtroFechaHasta());
     }
 
     return lista;
@@ -125,12 +65,12 @@ export class SesionesComponent implements OnInit {
 
   // Estadísticas rápidas
   totalSesiones = computed(() => this.sesionesFiltradasComputed().length);
-  totalMinutos = computed(() => this.sesionesFiltradasComputed().reduce((acc, s) => acc + s.duracion_min, 0));
+  totalMinutos = computed(() => this.sesionesFiltradasComputed().reduce((acc: number, s: Sesion) => acc + s.duracion_min, 0));
   totalHoras = computed(() => (this.totalMinutos() / 60).toFixed(1));
   esfuerzoPromedio = computed(() => {
     const s = this.sesionesFiltradasComputed();
-    if (!s.length) return 0;
-    return (s.reduce((acc, ses) => acc + ses.esfuerzo_percibido, 0) / s.length).toFixed(1);
+    if (!s.length) return '0.0';
+    return (s.reduce((acc: number, ses: Sesion) => acc + ses.esfuerzo_percibido, 0) / s.length).toFixed(1);
   });
 
   async ngOnInit() {

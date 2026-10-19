@@ -76,37 +76,8 @@ h1 {
   gap: 0.4rem;
 }
 
-<<<<<<< Updated upstream
 /* Buttons */
 .btn-primary {
-=======
-.page-title {
-  font-size: 2.2rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  margin: 0 0 0.4rem;
-  background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.page-subtitle {
-  color: #94a3b8;
-  font-size: 0.95rem;
-  margin: 0;
-  max-width: 650px;
-  line-height: 1.5;
-}
-
-.header-actions {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.btn-secondary-link {
->>>>>>> Stashed changes
   display: inline-flex;
   align-items: center;
   justify-content: center;
