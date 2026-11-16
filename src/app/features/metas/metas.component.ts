@@ -1,9 +1,25 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MetasService } from '../../core/services/metas.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { Meta } from '../../core/models/meta.model';
+
+interface DiaPlan {
+  dia: string;
+  tipo: string;
+  duracionMin: number;
+  intensidad: string;
+  descripcion: string;
+  esDescanso: boolean;
+}
+
+interface SemanaProgresion {
+  semana: number;
+  horasSugeridas: number;
+  enfoque: string;
+  estado: 'pasada' | 'actual' | 'futura';
+}
 
 @Component({
   selector: 'app-metas',
@@ -15,7 +31,7 @@ import { Meta } from '../../core/models/meta.model';
       <header class="page-header">
         <div class="header-left">
           <h1><i class="bi bi-bullseye"></i> Mi Meta de Resistencia</h1>
-          <p class="subtitle">Define tu plan de resistencia física y monitorea tu progreso semanal</p>
+          <p class="subtitle">Define tu plan de resistencia física y monitorea tu progresión inteligente</p>
         </div>
         @if (!loading() && metaActual() && !editando()) {
           <div class="header-actions">
@@ -23,6 +39,10 @@ import { Meta } from '../../core/models/meta.model';
               <i class="bi bi-pencil-square"></i>
               <span>Modificar Meta</span>
             </button>
+            <a routerLink="/sesiones" class="btn btn-primary-outline">
+              <i class="bi bi-plus-circle"></i>
+              <span>Entrenar Hoy</span>
+            </a>
           </div>
         }
       </header>
@@ -50,77 +70,221 @@ import { Meta } from '../../core/models/meta.model';
         </div>
       } @else {
 
-        <!-- Vista de Resumen / Meta Activa -->
+        <!-- Vista Principal / Meta Activa -->
         @if (metaActual() && !editando()) {
-          <div class="meta-dashboard">
-            <!-- Tarjeta principal de la meta -->
-            <div class="main-card hero-meta-card">
-              <div class="meta-badge-row">
-                <span class="badge badge-discipline">
-                  <i class="bi bi-activity"></i> {{ metaActual()?.tipo_resistencia }}
-                </span>
-                <span class="badge badge-level">
-                  <i class="bi bi-bar-chart"></i> Nivel {{ metaActual()?.nivel_inicial | titlecase }}
-                </span>
-                <span class="badge badge-active">
-                  <i class="bi bi-check-circle-fill"></i> Meta Activa
-                </span>
-              </div>
-
-              <h2 class="hero-title">
-                Objetivo: {{ metaActual()?.horas_objetivo_semanales }}h semanales
-              </h2>
-              <p class="hero-description">
-                Programa diseñado para un plazo de <strong>{{ metaActual()?.plazo_semanas }} semanas</strong>,
-                enfocado en resistencia aeróbica continua.
-              </p>
-
-              <!-- Estadísticas destacadas -->
-              <div class="metrics-grid">
-                <div class="metric-card">
-                  <span class="metric-icon"><i class="bi bi-clock-history"></i></span>
-                  <div class="metric-info">
-                    <span class="metric-value">{{ metaActual()?.horas_objetivo_semanales }} h</span>
-                    <span class="metric-label">Por semana</span>
-                  </div>
-                </div>
-
-                <div class="metric-card">
-                  <span class="metric-icon"><i class="bi bi-calendar-week"></i></span>
-                  <div class="metric-info">
-                    <span class="metric-value">{{ metaActual()?.plazo_semanas }}</span>
-                    <span class="metric-label">Semanas de plan</span>
-                  </div>
-                </div>
-
-                <div class="metric-card">
-                  <span class="metric-icon"><i class="bi bi-flag-fill"></i></span>
-                  <div class="metric-info">
-                    <span class="metric-value">{{ calcularTotalHoras() }} h</span>
-                    <span class="metric-label">Horas proyectadas</span>
-                  </div>
-                </div>
-
-                <div class="metric-card">
-                  <span class="metric-icon"><i class="bi bi-trophy-fill"></i></span>
-                  <div class="metric-info">
-                    <span class="metric-value">{{ calcularFechaFin() }}</span>
-                    <span class="metric-label">Fecha de culminación</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Consejos de preparación según nivel -->
-            <div class="info-card">
-              <h3><i class="bi bi-lightbulb-fill"></i> Recomendación de ritmo</h3>
-              <p class="info-text">
-                Con <strong>{{ metaActual()?.horas_objetivo_semanales }} horas por semana</strong>, 
-                una distribución óptima es de <strong>3 a 4 sesiones</strong> semanales de entre 45 y 60 minutos,
-                manteniendo un nivel de esfuerzo percibido entre 5 y 7.
-              </p>
-            </div>
+          <!-- Selector de Pestañas -->
+          <div class="tabs-nav">
+            <button
+              class="tab-btn"
+              [class.active]="tabActiva() === 'resumen'"
+              (click)="tabActiva.set('resumen')"
+            >
+              <i class="bi bi-card-checklist"></i> Resumen de Meta
+            </button>
+            <button
+              class="tab-btn"
+              [class.active]="tabActiva() === 'rutina'"
+              (click)="tabActiva.set('rutina')"
+            >
+              <i class="bi bi-calendar-week"></i> Rutina Semanal Sugerida
+            </button>
+            <button
+              class="tab-btn"
+              [class.active]="tabActiva() === 'progresion'"
+              (click)="tabActiva.set('progresion')"
+            >
+              <i class="bi bi-graph-up-arrow"></i> Progresión por Semanas
+            </button>
           </div>
+
+          <!-- TAB 1: RESUMEN DE META -->
+          @if (tabActiva() === 'resumen') {
+            <div class="meta-dashboard">
+              <!-- Tarjeta principal hero -->
+              <div class="main-card hero-meta-card">
+                <div class="meta-badge-row">
+                  <span class="badge badge-discipline">
+                    <i class="bi bi-activity"></i> {{ metaActual()?.tipo_resistencia }}
+                  </span>
+                  <span class="badge badge-level">
+                    <i class="bi bi-bar-chart"></i> Nivel {{ metaActual()?.nivel_inicial | titlecase }}
+                  </span>
+                  <span class="badge badge-active">
+                    <i class="bi bi-check-circle-fill"></i> Meta Activa
+                  </span>
+                  <span class="badge badge-phase">
+                    <i class="bi bi-compass"></i> {{ faseActual().nombre }}
+                  </span>
+                </div>
+
+                <h2 class="hero-title">
+                  Objetivo: {{ metaActual()?.horas_objetivo_semanales }}h semanales
+                </h2>
+                <p class="hero-description">
+                  Programa diseñado para un plazo de <strong>{{ metaActual()?.plazo_semanas }} semanas</strong>.
+                  Actualmente te encuentras en la <strong>Semana {{ semanaActual() }}</strong>
+                  ({{ porcentajeTiempoTranscurrido() }}% del tiempo transcurrido).
+                </p>
+
+                <!-- Barra de progreso temporal de la meta -->
+                <div class="progress-container">
+                  <div class="progress-labels">
+                    <span>Inicio: {{ metaActual()?.fecha_inicio }}</span>
+                    <span>Semana {{ semanaActual() }} de {{ metaActual()?.plazo_semanas }}</span>
+                    <span>Fin: {{ calcularFechaFin() }}</span>
+                  </div>
+                  <div class="progress-bar-bg">
+                    <div
+                      class="progress-bar-fill"
+                      [style.width.%]="porcentajeTiempoTranscurrido()"
+                    ></div>
+                  </div>
+                </div>
+
+                <!-- Estadísticas destacadas -->
+                <div class="metrics-grid">
+                  <div class="metric-card">
+                    <span class="metric-icon"><i class="bi bi-clock-history"></i></span>
+                    <div class="metric-info">
+                      <span class="metric-value">{{ metaActual()?.horas_objetivo_semanales }} h</span>
+                      <span class="metric-label">Por semana</span>
+                    </div>
+                  </div>
+
+                  <div class="metric-card">
+                    <span class="metric-icon"><i class="bi bi-calendar-check"></i></span>
+                    <div class="metric-info">
+                      <span class="metric-value">Sem. {{ semanaActual() }}/{{ metaActual()?.plazo_semanas }}</span>
+                      <span class="metric-label">Semana actual</span>
+                    </div>
+                  </div>
+
+                  <div class="metric-card">
+                    <span class="metric-icon"><i class="bi bi-flag-fill"></i></span>
+                    <div class="metric-info">
+                      <span class="metric-value">{{ calcularTotalHoras() }} h</span>
+                      <span class="metric-label">Horas proyectadas</span>
+                    </div>
+                  </div>
+
+                  <div class="metric-card">
+                    <span class="metric-icon"><i class="bi bi-hourglass-split"></i></span>
+                    <div class="metric-info">
+                      <span class="metric-value">{{ diasRestantes() }} d</span>
+                      <span class="metric-label">Días restantes</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Consejos de preparación según nivel -->
+              <div class="info-card">
+                <h3><i class="bi bi-lightbulb-fill"></i> Recomendación de ritmo para tu fase actual</h3>
+                <p class="info-text">
+                  Estás en la <strong>{{ faseActual().nombre }}</strong>: {{ faseActual().descripcion }}.
+                  Con un objetivo de <strong>{{ metaActual()?.horas_objetivo_semanales }} horas semanales</strong>,
+                  te recomendamos priorizar la constancia antes que la velocidad.
+                </p>
+              </div>
+            </div>
+          }
+
+          <!-- TAB 2: RUTINA SEMANAL SUGERIDA -->
+          @if (tabActiva() === 'rutina') {
+            <div class="rutina-container">
+              <div class="rutina-header-card">
+                <div>
+                  <h3><i class="bi bi-calendar3"></i> Microciclo Semanal Adaptado</h3>
+                  <p class="text-muted">
+                    Distribución de carga recomendada para <strong>{{ metaActual()?.horas_objetivo_semanales }}h</strong> 
+                    en nivel <strong>{{ metaActual()?.nivel_inicial | titlecase }}</strong>.
+                  </p>
+                </div>
+                <div class="rutina-badge">
+                  <span>{{ calcularSesionesPorSemana() }} sesiones activas / sem</span>
+                </div>
+              </div>
+
+              <div class="dias-grid">
+                @for (d of rutinaSugerida(); track d.dia) {
+                  <div class="dia-card" [class.dia-descanso]="d.esDescanso">
+                    <div class="dia-header">
+                      <span class="dia-nombre">{{ d.dia }}</span>
+                      <span class="dia-badge" [class.badge-rest]="d.esDescanso">
+                        {{ d.esDescanso ? 'Recuperación' : d.duracionMin + ' min' }}
+                      </span>
+                    </div>
+                    <h4 class="dia-tipo">{{ d.tipo }}</h4>
+                    <p class="dia-desc">{{ d.descripcion }}</p>
+                    <div class="dia-footer">
+                      <span class="intensidad-tag">
+                        <i class="bi bi-speedometer2"></i> {{ d.intensidad }}
+                      </span>
+                    </div>
+                  </div>
+                }
+              </div>
+
+              <div class="info-card mt-3">
+                <h3><i class="bi bi-shield-check"></i> Regla de oro de la resistencia</h3>
+                <p class="info-text">
+                  El descanso es cuando tus músculos y sistema cardiovascular se adaptan y fortalecen.
+                  Nunca sustituyas un día de descanso programado por una sesión intensa si sientes fatiga muscular acumulada.
+                </p>
+              </div>
+            </div>
+          }
+
+          <!-- TAB 3: PROGRESIÓN POR SEMANAS -->
+          @if (tabActiva() === 'progresion') {
+            <div class="progresion-container">
+              <div class="progresion-header-card">
+                <h3><i class="bi bi-stairs"></i> Sobrecarga Progresiva del Plan</h3>
+                <p class="text-muted">
+                  Evolución sugerida del volumen semanal (principio fisiológico de progresión gradual) para 
+                  alcanzar tu meta sin sobreentrenar.
+                </p>
+              </div>
+
+              <div class="semanas-table-wrapper">
+                <table class="semanas-table">
+                  <thead>
+                    <tr>
+                      <th>Semana</th>
+                      <th>Volumen Sugerido</th>
+                      <th>Enfoque Fisiológico</th>
+                      <th>Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (s of semanasProgresion(); track s.semana) {
+                      <tr [class.fila-actual]="s.estado === 'actual'">
+                        <td>
+                          <span class="sem-badge" [class.sem-actual]="s.estado === 'actual'">
+                            Semana {{ s.semana }}
+                          </span>
+                        </td>
+                        <td>
+                          <strong>{{ s.horasSugeridas }} h</strong>
+                          <span class="porc-txt">({{ calcularPorcentajeMeta(s.horasSugeridas) }}%)</span>
+                        </td>
+                        <td>{{ s.enfoque }}</td>
+                        <td>
+                          @if (s.estado === 'pasada') {
+                            <span class="tag-status tag-done"><i class="bi bi-check-all"></i> Pasada</span>
+                          } @else if (s.estado === 'actual') {
+                            <span class="tag-status tag-current"><i class="bi bi-record-circle-fill"></i> En Curso</span>
+                          } @else {
+                            <span class="tag-status tag-pending"><i class="bi bi-clock"></i> Planificada</span>
+                          }
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          }
         }
 
         <!-- Formulario para Crear o Editar Meta -->
@@ -251,9 +415,15 @@ import { Meta } from '../../core/models/meta.model';
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 2rem;
+      margin-bottom: 1.75rem;
       flex-wrap: wrap;
       gap: 1.25rem;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
     }
 
     h1 {
@@ -321,6 +491,46 @@ import { Meta } from '../../core/models/meta.model';
       to { transform: rotate(360deg); }
     }
 
+    /* Tabs Navigation */
+    .tabs-nav {
+      display: flex;
+      gap: 0.5rem;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 0.35rem;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      margin-bottom: 1.75rem;
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      padding: 0.65rem 1.15rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn:hover {
+      color: #f8fafc;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .tab-btn.active {
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.12);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Hero Meta Card */
     .hero-meta-card {
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid rgba(255, 255, 255, 0.08);
@@ -365,6 +575,12 @@ import { Meta } from '../../core/models/meta.model';
       border: 1px solid rgba(34, 197, 94, 0.3);
     }
 
+    .badge-phase {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
     .hero-title {
       font-size: 1.7rem;
       font-weight: 700;
@@ -375,8 +591,42 @@ import { Meta } from '../../core/models/meta.model';
     .hero-description {
       color: #94a3b8;
       font-size: 0.95rem;
-      margin: 0 0 1.75rem;
+      margin: 0 0 1.5rem;
       line-height: 1.5;
+    }
+
+    /* Progress Bar */
+    .progress-container {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.75rem;
+    }
+
+    .progress-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: #94a3b8;
+      margin-bottom: 0.6rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .progress-bar-bg {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #38bdf8, #818cf8);
+      border-radius: 6px;
+      transition: width 0.4s ease;
     }
 
     .metrics-grid {
@@ -441,6 +691,211 @@ import { Meta } from '../../core/models/meta.model';
       margin: 0;
     }
 
+    .mt-3 {
+      margin-top: 1.5rem;
+    }
+
+    /* Rutina Semanal Cards */
+    .rutina-header-card, .progresion-header-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 14px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .rutina-header-card h3, .progresion-header-card h3 {
+      font-size: 1.15rem;
+      color: #f8fafc;
+      margin: 0 0 0.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .rutina-header-card h3 i, .progresion-header-card h3 i {
+      color: #38bdf8;
+    }
+
+    .text-muted {
+      color: #64748b;
+      font-size: 0.875rem;
+      margin: 0;
+    }
+
+    .rutina-badge span {
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      padding: 0.4rem 0.9rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .dias-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1rem;
+    }
+
+    .dia-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 14px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      transition: all 0.2s ease;
+    }
+
+    .dia-card:hover {
+      border-color: rgba(56, 189, 248, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .dia-card.dia-descanso {
+      background: rgba(255, 255, 255, 0.015);
+      border-color: rgba(255, 255, 255, 0.04);
+      opacity: 0.85;
+    }
+
+    .dia-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .dia-nombre {
+      font-weight: 700;
+      color: #38bdf8;
+      font-size: 0.95rem;
+    }
+
+    .dia-badge {
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: rgba(56, 189, 248, 0.15);
+      color: #7dd3fc;
+      padding: 0.2rem 0.6rem;
+      border-radius: 12px;
+    }
+
+    .dia-badge.badge-rest {
+      background: rgba(148, 163, 184, 0.15);
+      color: #94a3b8;
+    }
+
+    .dia-tipo {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #f1f5f9;
+      margin: 0;
+    }
+
+    .dia-desc {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      margin: 0;
+      line-height: 1.45;
+      flex: 1;
+    }
+
+    .dia-footer {
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 0.6rem;
+    }
+
+    .intensidad-tag {
+      font-size: 0.75rem;
+      color: #cbd5e1;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    /* Progresión Table */
+    .semanas-table-wrapper {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 14px;
+      overflow-x: auto;
+    }
+
+    .semanas-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      text-align: left;
+    }
+
+    .semanas-table th {
+      padding: 1rem 1.25rem;
+      background: rgba(255, 255, 255, 0.02);
+      color: #64748b;
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .semanas-table td {
+      padding: 0.9rem 1.25rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      color: #cbd5e1;
+    }
+
+    .fila-actual {
+      background: rgba(56, 189, 248, 0.08);
+    }
+
+    .sem-badge {
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+
+    .sem-badge.sem-actual {
+      color: #38bdf8;
+    }
+
+    .porc-txt {
+      font-size: 0.775rem;
+      color: #64748b;
+      margin-left: 0.35rem;
+    }
+
+    .tag-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.25rem 0.65rem;
+      border-radius: 20px;
+    }
+
+    .tag-done {
+      background: rgba(34, 197, 94, 0.15);
+      color: #4ade80;
+    }
+
+    .tag-current {
+      background: rgba(56, 189, 248, 0.2);
+      color: #38bdf8;
+    }
+
+    .tag-pending {
+      background: rgba(148, 163, 184, 0.1);
+      color: #94a3b8;
+    }
+
+    /* Forms */
     .form-card {
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid rgba(255, 255, 255, 0.08);
@@ -528,6 +983,7 @@ import { Meta } from '../../core/models/meta.model';
       font-weight: 600;
       cursor: pointer;
       border: none;
+      text-decoration: none;
       transition: all 0.2s;
     }
 
@@ -540,6 +996,17 @@ import { Meta } from '../../core/models/meta.model';
     .btn-primary:hover:not(:disabled) {
       opacity: 0.92;
       transform: translateY(-1px);
+    }
+
+    .btn-primary-outline {
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: #38bdf8;
+    }
+
+    .btn-primary-outline:hover {
+      background: rgba(56, 189, 248, 0.22);
+      color: #f8fafc;
     }
 
     .btn-secondary {
@@ -574,16 +1041,16 @@ import { Meta } from '../../core/models/meta.model';
         align-items: stretch;
         gap: 0.75rem;
       }
+      .header-actions {
+        flex-direction: column;
+        width: 100%;
+      }
       .header-actions .btn {
         width: 100%;
         text-align: center;
         justify-content: center;
       }
-      .hero-meta-card {
-        padding: 1.25rem 1rem;
-        border-radius: 16px;
-      }
-      .form-card {
+      .hero-meta-card, .form-card {
         padding: 1.25rem 1rem;
         border-radius: 16px;
       }
@@ -612,12 +1079,6 @@ import { Meta } from '../../core/models/meta.model';
         width: 100%;
       }
     }
-
-    @media (max-width: 380px) {
-      .metrics-grid {
-        grid-template-columns: 1fr;
-      }
-    }
   `]
 })
 export class MetasComponent implements OnInit {
@@ -631,6 +1092,9 @@ export class MetasComponent implements OnInit {
   editando = signal(false);
   mensajeExito = signal<string | null>(null);
   error = signal<string | null>(null);
+
+  // Pestaña activa
+  tabActiva = signal<'resumen' | 'rutina' | 'progresion'>('resumen');
 
   niveles = [
     { id: 'principiante', label: 'Principiante', desc: 'Empezando desde cero o retomando actividad' },
@@ -652,6 +1116,238 @@ export class MetasComponent implements OnInit {
     plazo_semanas: [8, [Validators.required, Validators.min(1), Validators.max(52)]],
     horas_objetivo_semanales: [3, [Validators.required, Validators.min(0.5), Validators.max(40)]],
     fecha_inicio: [new Date().toISOString().substring(0, 10), [Validators.required]]
+  });
+
+  // ===== Computed Signals de Progresión Temporal =====
+  diasTranscurridos = computed(() => {
+    const meta = this.metaActual();
+    if (!meta || !meta.fecha_inicio) return 0;
+    const inicio = new Date(meta.fecha_inicio).getTime();
+    const hoy = new Date().getTime();
+    const diff = Math.floor((hoy - inicio) / (1000 * 60 * 60 * 24));
+    return Math.max(0, diff);
+  });
+
+  totalDiasPlan = computed(() => {
+    const meta = this.metaActual();
+    if (!meta) return 56;
+    return meta.plazo_semanas * 7;
+  });
+
+  diasRestantes = computed(() => {
+    const total = this.totalDiasPlan();
+    const trans = this.diasTranscurridos();
+    return Math.max(0, total - trans);
+  });
+
+  semanaActual = computed(() => {
+    const meta = this.metaActual();
+    if (!meta) return 1;
+    const sem = Math.floor(this.diasTranscurridos() / 7) + 1;
+    return Math.min(sem, meta.plazo_semanas);
+  });
+
+  porcentajeTiempoTranscurrido = computed(() => {
+    const total = this.totalDiasPlan();
+    if (total === 0) return 0;
+    return Math.min(100, Math.round((this.diasTranscurridos() / total) * 100));
+  });
+
+  faseActual = computed(() => {
+    const porc = this.porcentajeTiempoTranscurrido();
+    if (porc <= 33) {
+      return {
+        nombre: 'Fase de Adaptación y Base',
+        descripcion: 'Construcción de resistencia aeróbica inicial, adaptación muscular y control de ritmo cómodo.'
+      };
+    } else if (porc <= 75) {
+      return {
+        nombre: 'Fase de Desarrollo y Carga',
+        descripcion: 'Incremento sostenido de volumen, consolidación de la capacidad pulmonar y eficiencia energética.'
+      };
+    } else {
+      return {
+        nombre: 'Fase Pico y Consolidación',
+        descripcion: 'Máxima resistencia alcanzada. Mantén la constancia y realiza descargas controladas.'
+      };
+    }
+  });
+
+  // ===== Computed Rutina Semanal Sugerida =====
+  rutinaSugerida = computed((): DiaPlan[] => {
+    const meta = this.metaActual();
+    const horas = meta?.horas_objetivo_semanales ?? 3;
+    const disciplina = meta?.tipo_resistencia ?? 'Running';
+    const nivel = meta?.nivel_inicial ?? 'principiante';
+
+    // Minutos totales y cálculo de sesiones
+    const totalMinutos = Math.round(horas * 60);
+
+    if (nivel === 'principiante') {
+      const duracionSesion = Math.round(totalMinutos / 3);
+      return [
+        {
+          dia: 'Lunes',
+          tipo: `${disciplina} Base`,
+          duracionMin: duracionSesion,
+          intensidad: 'Esfuerzo 4-5/10 (Zona 2)',
+          descripcion: 'Ritmo conversacional suave para construir mitocondrias y base aeróbica.',
+          esDescanso: false
+        },
+        {
+          dia: 'Martes',
+          tipo: 'Recuperación Activa',
+          duracionMin: 0,
+          intensidad: 'Esfuerzo 1-2/10',
+          descripcion: 'Caminata ligera, movilidad articular o descanso total.',
+          esDescanso: true
+        },
+        {
+          dia: 'Miércoles',
+          tipo: `${disciplina} Progresivo`,
+          duracionMin: duracionSesion,
+          intensidad: 'Esfuerzo 5-6/10',
+          descripcion: 'Inicia muy suave y acelera levemente en los últimos 10 minutos.',
+          esDescanso: false
+        },
+        {
+          dia: 'Jueves',
+          tipo: 'Descanso Total',
+          duracionMin: 0,
+          intensidad: 'Reposo',
+          descripcion: 'Recuperación neuromuscular y descanso reparador.',
+          esDescanso: true
+        },
+        {
+          dia: 'Viernes',
+          tipo: 'Movilidad o Yoga',
+          duracionMin: 0,
+          intensidad: 'Estiramientos',
+          descripcion: 'Estiramientos estáticos y foam roller para descargar piernas.',
+          esDescanso: true
+        },
+        {
+          dia: 'Sábado',
+          tipo: `Tirada de Fondo (${disciplina})`,
+          duracionMin: duracionSesion,
+          intensidad: 'Esfuerzo 4-5/10',
+          descripcion: 'La sesión más larga de la semana. Mantén ritmo constante y sin prisa.',
+          esDescanso: false
+        },
+        {
+          dia: 'Domingo',
+          tipo: 'Descanso Semanal',
+          duracionMin: 0,
+          intensidad: 'Reposo',
+          descripcion: 'Día libre para asimilar el entrenamiento de la semana.',
+          esDescanso: true
+        }
+      ];
+    } else {
+      // Intermedio / Avanzado: 4 sesiones activas
+      const duracionBase = Math.round((totalMinutos * 0.22));
+      const duracionFondo = Math.round((totalMinutos * 0.34));
+      return [
+        {
+          dia: 'Lunes',
+          tipo: `${disciplina} Aeróbico Corto`,
+          duracionMin: duracionBase,
+          intensidad: 'Esfuerzo 5/10',
+          descripcion: 'Activación semanal a ritmo continuo y cómodo.',
+          esDescanso: false
+        },
+        {
+          dia: 'Martes',
+          tipo: 'Descanso Activo',
+          duracionMin: 0,
+          intensidad: 'Reposo',
+          descripcion: 'Movilidad de cadera, tobillos y estiramientos.',
+          esDescanso: true
+        },
+        {
+          dia: 'Miércoles',
+          tipo: `${disciplina} a Ritmo Medio`,
+          duracionMin: duracionBase,
+          intensidad: 'Esfuerzo 6-7/10',
+          descripcion: 'Bloques continuos a ritmo moderadamente exigente.',
+          esDescanso: false
+        },
+        {
+          dia: 'Jueves',
+          tipo: 'Recuperación / Core',
+          duracionMin: 0,
+          intensidad: 'Fuerza suave',
+          descripcion: 'Trabajo preventivo de abdomen, lumbares y glúteos.',
+          esDescanso: true
+        },
+        {
+          dia: 'Viernes',
+          tipo: `${disciplina} con Cambios de Ritmo`,
+          duracionMin: duracionBase,
+          intensidad: 'Esfuerzo 7-8/10',
+          descripcion: 'Fartlek o intervalos cortos para elevar el umbral anaeróbico.',
+          esDescanso: false
+        },
+        {
+          dia: 'Sábado',
+          tipo: `Tirada Larga de Resistencia`,
+          duracionMin: duracionFondo,
+          intensidad: 'Esfuerzo 5-6/10',
+          descripcion: 'Sesión principal de fondo para entrenar la resistencia mental y física.',
+          esDescanso: false
+        },
+        {
+          dia: 'Domingo',
+          tipo: 'Descanso Completo',
+          duracionMin: 0,
+          intensidad: 'Reposo',
+          descripcion: 'Nutrición, hidratación y sueño para empezar el nuevo ciclo al 100%.',
+          esDescanso: true
+        }
+      ];
+    }
+  });
+
+  // ===== Computed Progresión de Volumen por Semanas =====
+  semanasProgresion = computed((): SemanaProgresion[] => {
+    const meta = this.metaActual();
+    if (!meta) return [];
+
+    const totalSem = meta.plazo_semanas;
+    const horasObjetivo = meta.horas_objetivo_semanales;
+    const semAct = this.semanaActual();
+    const resultado: SemanaProgresion[] = [];
+
+    for (let i = 1; i <= totalSem; i++) {
+      let factor = 0.75 + (i / totalSem) * 0.25; // escala desde 75% hasta 100%
+      // Cada 4ta semana una descarga ligera (90% del factor anterior)
+      if (i % 4 === 0 && i !== totalSem) {
+        factor *= 0.85;
+      }
+      const horasSug = +(horasObjetivo * factor).toFixed(1);
+
+      let enfoque = 'Adaptación y volumen base';
+      if (i % 4 === 0 && i !== totalSem) {
+        enfoque = 'Semana de descarga / asimilación';
+      } else if (i > totalSem * 0.7) {
+        enfoque = 'Consolidación y ritmo objetivo';
+      } else if (i > totalSem * 0.35) {
+        enfoque = 'Carga progresiva de resistencia';
+      }
+
+      let estado: 'pasada' | 'actual' | 'futura' = 'futura';
+      if (i < semAct) estado = 'pasada';
+      else if (i === semAct) estado = 'actual';
+
+      resultado.push({
+        semana: i,
+        horasSugeridas: horasSug,
+        enfoque,
+        estado
+      });
+    }
+
+    return resultado;
   });
 
   async ngOnInit() {
@@ -767,5 +1463,15 @@ export class MetasComponent implements OnInit {
     const meta = this.metaActual();
     if (!meta) return 0;
     return meta.plazo_semanas * meta.horas_objetivo_semanales;
+  }
+
+  calcularSesionesPorSemana(): number {
+    return this.metaActual()?.nivel_inicial === 'principiante' ? 3 : 4;
+  }
+
+  calcularPorcentajeMeta(horasSugeridas: number): number {
+    const meta = this.metaActual();
+    if (!meta || !meta.horas_objetivo_semanales) return 100;
+    return Math.round((horasSugeridas / meta.horas_objetivo_semanales) * 100);
   }
 }
