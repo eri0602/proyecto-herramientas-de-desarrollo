@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { DemoDataService } from './demo-data.service';
 import { Sesion } from '../models/sesion.model';
+import { TipoActividad } from '../models/tipo-actividad.model';
 
 const STORAGE_KEY = 'resiste_sesiones';
 
@@ -42,7 +43,7 @@ export class SesionesService {
       if (data && data.length > 0) return data;
       return this.getLocalSesiones();
     } catch {
-      return this.getLocalSesiones();
+      return this.getLocalSesiones().filter((s: Sesion) => s.usuario_id === usuarioId);
     }
   }
 
@@ -51,7 +52,7 @@ export class SesionesService {
       const { data, error } = await this.supabase
         .from('sesiones')
         .insert(sesion)
-        .select()
+        .select('*, tipos_actividad(*)')
         .single();
       if (error) throw error;
       return data;
@@ -70,13 +71,13 @@ export class SesionesService {
         .from('sesiones')
         .update(cambios)
         .eq('id', id)
-        .select()
+        .select('*, tipos_actividad(*)')
         .single();
       if (error) throw error;
       return data;
     } catch {
       const sesiones = this.getLocalSesiones();
-      const idx = sesiones.findIndex(s => s.id === id);
+      const idx = sesiones.findIndex((s: Sesion) => s.id === id);
       if (idx >= 0) {
         sesiones[idx] = { ...sesiones[idx], ...cambios };
         this.saveLocalSesiones(sesiones);
@@ -94,7 +95,7 @@ export class SesionesService {
         .eq('id', id);
       if (error) throw error;
     } catch {
-      const sesiones = this.getLocalSesiones().filter(s => s.id !== id);
+      const sesiones = this.getLocalSesiones().filter((s: Sesion) => s.id !== id);
       this.saveLocalSesiones(sesiones);
     }
   }

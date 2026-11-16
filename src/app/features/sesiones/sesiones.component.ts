@@ -1,7 +1,6 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { SesionesService } from '../../core/services/sesiones.service';
 import { TiposActividadService } from '../../core/services/tipos-actividad.service';
 import { SupabaseService } from '../../core/services/supabase.service';
@@ -21,7 +20,7 @@ export interface Logro {
 @Component({
   selector: 'app-sesiones',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './sesiones.component.html',
   styleUrls: ['./sesiones.component.css']
 })
@@ -64,13 +63,20 @@ export class SesionesComponent implements OnInit {
     let lista = this.sesiones();
 
     if (this.filtroTipo()) {
-      lista = lista.filter(s => s.tipo_actividad_id === this.filtroTipo());
+      lista = lista.filter((s: Sesion) => s.tipo_actividad_id === this.filtroTipo());
     }
     if (this.filtroFechaDesde()) {
-      lista = lista.filter(s => s.fecha >= this.filtroFechaDesde());
+      lista = lista.filter((s: Sesion) => s.fecha >= this.filtroFechaDesde());
     }
     if (this.filtroFechaHasta()) {
-      lista = lista.filter(s => s.fecha <= this.filtroFechaHasta());
+      lista = lista.filter((s: Sesion) => s.fecha <= this.filtroFechaHasta());
+    }
+    if (this.filtroTexto().trim()) {
+      const q = this.filtroTexto().trim().toLowerCase();
+      lista = lista.filter(s =>
+        (s.notas && s.notas.toLowerCase().includes(q)) ||
+        this.getNombreTipo(s.tipo_actividad_id).toLowerCase().includes(q)
+      );
     }
     if (this.filtroTexto().trim()) {
       const q = this.filtroTexto().trim().toLowerCase();
@@ -85,12 +91,12 @@ export class SesionesComponent implements OnInit {
 
   // Estadísticas rápidas
   totalSesiones = computed(() => this.sesionesFiltradasComputed().length);
-  totalMinutos = computed(() => this.sesionesFiltradasComputed().reduce((acc, s) => acc + s.duracion_min, 0));
+  totalMinutos = computed(() => this.sesionesFiltradasComputed().reduce((acc: number, s: Sesion) => acc + s.duracion_min, 0));
   totalHoras = computed(() => (this.totalMinutos() / 60).toFixed(1));
   esfuerzoPromedio = computed(() => {
     const s = this.sesionesFiltradasComputed();
-    if (!s.length) return 0;
-    return (s.reduce((acc, ses) => acc + ses.esfuerzo_percibido, 0) / s.length).toFixed(1);
+    if (!s.length) return '0.0';
+    return (s.reduce((acc: number, ses: Sesion) => acc + ses.esfuerzo_percibido, 0) / s.length).toFixed(1);
   });
 
   // ===== Sistema de Logros de Resistencia =====
@@ -291,14 +297,6 @@ export class SesionesComponent implements OnInit {
     this.filtroFechaDesde.set('');
     this.filtroFechaHasta.set('');
     this.filtroTexto.set('');
-  }
-
-  // ===== Cargar datos de prueba =====
-  cargarDatosDemo() {
-    const demos = this.sesionesService.restaurarDemo();
-    this.sesiones.set(demos);
-    this.exito.set('¡7 sesiones de prueba cargadas para demostrar logros y exportación!');
-    setTimeout(() => this.exito.set(null), 3500);
   }
 
   // ===== Exportación a CSV =====

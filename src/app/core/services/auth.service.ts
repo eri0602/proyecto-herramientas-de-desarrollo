@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { Router } from '@angular/router';
+import { AuthChangeEvent, Session } from '@supabase/supabase-js';
 
 const DEMO_STORAGE_KEY = 'resiste_demo_user';
 
@@ -40,10 +41,12 @@ export class AuthService {
 
     // Escuchar cambios de auth
     try {
-      this.supabase.auth.onAuthStateChange((_event, session) => {
+      this.supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
         if (session?.user) {
           this.currentUser.set(session.user);
           localStorage.removeItem(DEMO_STORAGE_KEY);
+        } else {
+          this.currentUser.set(null);
         }
       });
     } catch {

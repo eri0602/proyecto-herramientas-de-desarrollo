@@ -3,12 +3,11 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { TiposActividadService } from '../../core/services/tipos-actividad.service';
 import { TipoActividad } from '../../core/models/tipo-actividad.model';
-import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-tipos-actividad',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './tipos-actividad.component.html',
   styleUrls: ['./tipos-actividad.component.css']
 })
