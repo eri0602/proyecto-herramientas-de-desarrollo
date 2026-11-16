@@ -8,6 +8,16 @@ import { SupabaseService } from '../../core/services/supabase.service';
 import { Sesion } from '../../core/models/sesion.model';
 import { TipoActividad } from '../../core/models/tipo-actividad.model';
 
+export interface Logro {
+  id: string;
+  titulo: string;
+  icono: string;
+  descripcion: string;
+  desbloqueado: boolean;
+  progreso: number; // 0 - 100
+  progresoTexto: string;
+}
+
 @Component({
   selector: 'app-sesiones',
   standalone: true,
@@ -32,11 +42,13 @@ export class SesionesComponent implements OnInit {
   error = signal<string | null>(null);
   exito = signal<string | null>(null);
   mostrarFormulario = signal(false);
+  mostrarModalLogros = signal(false);
 
   // Filtros
   filtroTipo = signal<string>('');
   filtroFechaDesde = signal<string>('');
   filtroFechaHasta = signal<string>('');
+  filtroTexto = signal<string>('');
 
   // Formulario
   form = this.fb.group({
@@ -60,6 +72,13 @@ export class SesionesComponent implements OnInit {
     if (this.filtroFechaHasta()) {
       lista = lista.filter(s => s.fecha <= this.filtroFechaHasta());
     }
+    if (this.filtroTexto().trim()) {
+      const q = this.filtroTexto().trim().toLowerCase();
+      lista = lista.filter(s =>
+        (s.notas && s.notas.toLowerCase().includes(q)) ||
+        this.getNombreTipo(s.tipo_actividad_id).toLowerCase().includes(q)
+      );
+    }
 
     return lista;
   });
@@ -73,6 +92,90 @@ export class SesionesComponent implements OnInit {
     if (!s.length) return 0;
     return (s.reduce((acc, ses) => acc + ses.esfuerzo_percibido, 0) / s.length).toFixed(1);
   });
+
+  // ===== Sistema de Logros de Resistencia =====
+  logros = computed((): Logro[] => {
+    const list = this.sesiones();
+    const totalMin = list.reduce((acc, s) => acc + s.duracion_min, 0);
+    const tieneFondoLargo = list.some(s => s.duracion_min >= 60);
+    const maxDuracion = list.reduce((max, s) => Math.max(max, s.duracion_min), 0);
+    const tieneZonaRoja = list.some(s => s.esfuerzo_percibido >= 8);
+    const tiposDistintos = new Set(list.map(s => s.tipo_actividad_id)).size;
+
+    // Calcular max sesiones en cualquier semana de 7 días
+    let maxSesionesSemana = 0;
+    const fechas = list.map(s => new Date(s.fecha).getTime()).sort();
+    for (let i = 0; i < fechas.length; i++) {
+      let count = 0;
+      for (let j = i; j < fechas.length; j++) {
+        if (fechas[j] - fechas[i] <= 7 * 24 * 60 * 60 * 1000) {
+          count++;
+        }
+      }
+      if (count > maxSesionesSemana) maxSesionesSemana = count;
+    }
+
+    return [
+      {
+        id: 'primer-paso',
+        titulo: 'Bautismo de Resistencia',
+        icono: 'bi-rocket-takeoff-fill',
+        descripcion: 'Registra tu primer entrenamiento en la plataforma.',
+        desbloqueado: list.length >= 1,
+        progreso: list.length >= 1 ? 100 : 0,
+        progresoTexto: list.length >= 1 ? '¡Completado!' : '0 / 1 sesión'
+      },
+      {
+        id: 'tirada-larga',
+        titulo: 'Fondo de Resistencia',
+        icono: 'bi-stopwatch-fill',
+        descripcion: 'Completa una sesión de al menos 60 minutos continuos.',
+        desbloqueado: tieneFondoLargo,
+        progreso: Math.min(100, Math.round((maxDuracion / 60) * 100)),
+        progresoTexto: tieneFondoLargo ? '¡Completado!' : `${maxDuracion} / 60 min`
+      },
+      {
+        id: 'zona-roja',
+        titulo: 'Esfuerzo Máximo',
+        icono: 'bi-fire',
+        descripcion: 'Registra una sesión con percepción de esfuerzo 8/10 o superior.',
+        desbloqueado: tieneZonaRoja,
+        progreso: tieneZonaRoja ? 100 : 0,
+        progresoTexto: tieneZonaRoja ? '¡Completado!' : 'Requiere esfuerzo ≥ 8'
+      },
+      {
+        id: 'club-300',
+        titulo: 'Club 300 Minutos',
+        icono: 'bi-trophy-fill',
+        descripcion: 'Acumula un total de 300 minutos de entrenamiento (5 horas).',
+        desbloqueado: totalMin >= 300,
+        progreso: Math.min(100, Math.round((totalMin / 300) * 100)),
+        progresoTexto: totalMin >= 300 ? '¡Completado!' : `${totalMin} / 300 min`
+      },
+      {
+        id: 'semana-fuego',
+        titulo: 'Semana de Fuego',
+        icono: 'bi-lightning-charge-fill',
+        descripcion: 'Registra 3 o más sesiones dentro de un intervalo de 7 días.',
+        desbloqueado: maxSesionesSemana >= 3,
+        progreso: Math.min(100, Math.round((maxSesionesSemana / 3) * 100)),
+        progresoTexto: maxSesionesSemana >= 3 ? '¡Completado!' : `${maxSesionesSemana} / 3 sesiones`
+      },
+      {
+        id: 'multidisciplina',
+        titulo: 'Atleta Multidisciplinario',
+        icono: 'bi-diagram-3-fill',
+        descripcion: 'Practica al menos 2 disciplinas de resistencia diferentes.',
+        desbloqueado: tiposDistintos >= 2,
+        progreso: Math.min(100, Math.round((tiposDistintos / 2) * 100)),
+        progresoTexto: tiposDistintos >= 2 ? '¡Completado!' : `${tiposDistintos} / 2 disciplinas`
+      }
+    ];
+  });
+
+  totalLogrosDesbloqueados = computed(() =>
+    this.logros().filter(l => l.desbloqueado).length
+  );
 
   async ngOnInit() {
     // Resolver userId desde Supabase antes de cargar sesiones
@@ -88,7 +191,7 @@ export class SesionesComponent implements OnInit {
     try {
       const data = await this.sesionesService.getSesiones(this.userId);
       this.sesiones.set(data);
-    } catch (e: any) {
+    } catch {
       this.error.set('Error al cargar sesiones');
     } finally {
       this.loading.set(false);
@@ -174,7 +277,7 @@ export class SesionesComponent implements OnInit {
       this.exito.set('Sesión eliminada');
       setTimeout(() => this.exito.set(null), 2000);
       await this.cargarSesiones();
-    } catch (e: any) {
+    } catch {
       this.error.set('Error al eliminar');
     }
   }
@@ -187,6 +290,52 @@ export class SesionesComponent implements OnInit {
     this.filtroTipo.set('');
     this.filtroFechaDesde.set('');
     this.filtroFechaHasta.set('');
+    this.filtroTexto.set('');
+  }
+
+  // ===== Exportación a CSV =====
+  exportarCSV() {
+    const lista = this.sesionesFiltradasComputed();
+    if (lista.length === 0) {
+      this.error.set('No hay sesiones que coincidan con los filtros para exportar.');
+      setTimeout(() => this.error.set(null), 3000);
+      return;
+    }
+
+    const encabezados = [
+      'ID',
+      'Fecha',
+      'Actividad',
+      'Duracion_Minutos',
+      'Duracion_Horas',
+      'Esfuerzo_Percibido',
+      'Nivel_Esfuerzo',
+      'Notas'
+    ];
+
+    const filas = lista.map(s => [
+      `"${s.id || ''}"`,
+      `"${s.fecha}"`,
+      `"${this.getNombreTipo(s.tipo_actividad_id)}"`,
+      s.duracion_min,
+      (s.duracion_min / 60).toFixed(2),
+      s.esfuerzo_percibido,
+      `"${this.getEsfuerzoLabel(s.esfuerzo_percibido)}"`,
+      `"${(s.notas || '').replace(/"/g, '""')}"`
+    ]);
+
+    const csvContent = '\uFEFF' + [encabezados.join(';'), ...filas.map(f => f.join(';'))].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const hoy = new Date().toISOString().substring(0, 10);
+    link.download = `resiste_sesiones_${hoy}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+
+    this.exito.set(`Reporte CSV exportado con ${lista.length} sesiones.`);
+    setTimeout(() => this.exito.set(null), 3500);
   }
 
   getEsfuerzoLabel(val: number): string {
@@ -203,7 +352,7 @@ export class SesionesComponent implements OnInit {
     return '#f87171';
   }
 
-  // ===== Handlers para filtros (evitan type-casts en el template) =====
+  // ===== Handlers de Filtros =====
   onFiltroTipoChange(event: Event): void {
     this.filtroTipo.set((event.target as HTMLSelectElement).value);
   }
@@ -214,5 +363,9 @@ export class SesionesComponent implements OnInit {
 
   onFiltroHastaChange(event: Event): void {
     this.filtroFechaHasta.set((event.target as HTMLInputElement).value);
+  }
+
+  onFiltroTextoChange(event: Event): void {
+    this.filtroTexto.set((event.target as HTMLInputElement).value);
   }
 }
