@@ -293,6 +293,14 @@ export class SesionesComponent implements OnInit {
     this.filtroTexto.set('');
   }
 
+  // ===== Cargar datos de prueba =====
+  cargarDatosDemo() {
+    const demos = this.sesionesService.restaurarDemo();
+    this.sesiones.set(demos);
+    this.exito.set('¡7 sesiones de prueba cargadas para demostrar logros y exportación!');
+    setTimeout(() => this.exito.set(null), 3500);
+  }
+
   // ===== Exportación a CSV =====
   exportarCSV() {
     const lista = this.sesionesFiltradasComputed();

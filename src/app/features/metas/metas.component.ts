@@ -36,6 +36,10 @@ interface SemanaProgresion {
         </div>
         @if (!loading() && metaActual() && !editando()) {
           <div class="header-actions">
+            <button class="btn btn-secondary" (click)="cargarDatosDemo()" title="Cargar meta de demostración">
+              <i class="bi bi-magic"></i>
+              <span>Meta Demo</span>
+            </button>
             <button class="btn btn-secondary" (click)="iniciarEdicion()">
               <i class="bi bi-pencil-square"></i>
               <span>Modificar Meta</span>
@@ -1474,5 +1478,14 @@ export class MetasComponent implements OnInit {
     const meta = this.metaActual();
     if (!meta || !meta.horas_objetivo_semanales) return 100;
     return Math.round((horasSugeridas / meta.horas_objetivo_semanales) * 100);
+  }
+
+  cargarDatosDemo() {
+    const demo = this.metasService.restaurarDemo('demo-user');
+    this.metaActual.set(demo);
+    this.editando.set(false);
+    this.tabActiva.set('resumen');
+    this.mensajeExito.set('¡Meta de prueba (Semana 3 de 8) cargada exitosamente!');
+    setTimeout(() => this.mensajeExito.set(null), 3500);
   }
 }

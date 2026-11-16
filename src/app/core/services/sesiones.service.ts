@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { SupabaseService } from './supabase.service';
+import { DemoDataService } from './demo-data.service';
 import { Sesion } from '../models/sesion.model';
 
 const STORAGE_KEY = 'resiste_sesiones';
@@ -9,11 +10,21 @@ const STORAGE_KEY = 'resiste_sesiones';
 })
 export class SesionesService {
   private supabase = inject(SupabaseService).supabase;
+  private demoData = inject(DemoDataService);
 
-  // Fallback local
+  // Fallback local con datos de prueba
   private getLocalSesiones(): Sesion[] {
     const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+    // Precargar datos de prueba automáticamente si está vacío
+    const demos = this.demoData.getDemoSesiones();
+    this.saveLocalSesiones(demos);
+    return demos;
   }
 
   private saveLocalSesiones(sesiones: Sesion[]): void {
@@ -28,7 +39,8 @@ export class SesionesService {
         .eq('usuario_id', usuarioId)
         .order('fecha', { ascending: false });
       if (error) throw error;
-      return data || [];
+      if (data && data.length > 0) return data;
+      return this.getLocalSesiones();
     } catch {
       return this.getLocalSesiones();
     }
@@ -85,5 +97,14 @@ export class SesionesService {
       const sesiones = this.getLocalSesiones().filter(s => s.id !== id);
       this.saveLocalSesiones(sesiones);
     }
+  }
+
+  /**
+   * Restablece las sesiones con los datos de prueba
+   */
+  restaurarDemo(): Sesion[] {
+    const demos = this.demoData.getDemoSesiones();
+    this.saveLocalSesiones(demos);
+    return demos;
   }
 }

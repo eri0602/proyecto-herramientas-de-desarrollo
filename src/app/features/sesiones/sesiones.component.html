@@ -6,6 +6,10 @@
       <p class="subtitle">Registra, audita y exporta tu historial de entrenamientos de resistencia</p>
     </div>
     <div class="header-actions">
+      <button class="btn-outline btn-demo" (click)="cargarDatosDemo()" title="Cargar datos de prueba de resistencia">
+        <i class="bi bi-magic"></i>
+        <span>Datos Demo</span>
+      </button>
       <button class="btn-outline" (click)="mostrarModalLogros.set(true)" title="Ver Insignias">
         <i class="bi bi-award-fill"></i>
         <span>Logros ({{ totalLogrosDesbloqueados() }}/{{ logros().length }})</span>
