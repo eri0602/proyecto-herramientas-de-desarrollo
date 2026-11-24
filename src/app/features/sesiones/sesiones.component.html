@@ -2,13 +2,27 @@
   <!-- Header -->
   <header class="page-header">
     <div class="header-left">
-      <h1>Mis Sesiones</h1>
-      <p class="subtitle">Registra y gestiona tu historial de entrenamiento de resistencia</p>
+      <h1><i class="bi bi-clock-history"></i> Mis Sesiones</h1>
+      <p class="subtitle">Registra, audita y exporta tu historial de entrenamientos de resistencia</p>
     </div>
-    <button class="btn-primary" (click)="abrirFormularioNuevo()">
-      <i class="bi bi-plus-lg"></i>
-      <span>Nueva Sesión</span>
-    </button>
+    <div class="header-actions">
+      <button class="btn-outline btn-demo" (click)="cargarDatosDemo()" title="Cargar datos de prueba de resistencia">
+        <i class="bi bi-magic"></i>
+        <span>Datos Demo</span>
+      </button>
+      <button class="btn-outline" (click)="mostrarModalLogros.set(true)" title="Ver Insignias">
+        <i class="bi bi-award-fill"></i>
+        <span>Logros ({{ totalLogrosDesbloqueados() }}/{{ logros().length }})</span>
+      </button>
+      <button class="btn-outline" (click)="exportarCSV()" [disabled]="sesionesFiltradasComputed().length === 0" title="Descargar como archivo CSV">
+        <i class="bi bi-file-earmark-arrow-down-fill"></i>
+        <span>Exportar CSV</span>
+      </button>
+      <button class="btn-primary" (click)="abrirFormularioNuevo()">
+        <i class="bi bi-plus-lg"></i>
+        <span>Nueva Sesión</span>
+      </button>
+    </div>
   </header>
 
   <!-- Alertas globales -->
@@ -41,7 +55,7 @@
     </div>
   </div>
 
-  <!-- Modal / Formulario -->
+  <!-- Modal / Formulario Nueva/Editar Sesión -->
   @if (mostrarFormulario()) {
     <div class="modal-overlay" (click)="cancelar()">
       <div class="modal-card" (click)="$event.stopPropagation()">
@@ -156,20 +170,80 @@
     </div>
   }
 
-  <!-- Filtros -->
+  <!-- Modal de Logros e Insignias -->
+  @if (mostrarModalLogros()) {
+    <div class="modal-overlay" (click)="mostrarModalLogros.set(false)">
+      <div class="modal-card modal-logros" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div class="logros-title-wrapper">
+            <h2><i class="bi bi-award-fill"></i> Logros de Resistencia</h2>
+            <span class="logros-count">{{ totalLogrosDesbloqueados() }} de {{ logros().length }} desbloqueados</span>
+          </div>
+          <button class="btn-close" (click)="mostrarModalLogros.set(false)" aria-label="Cerrar">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+
+        <div class="logros-list">
+          @for (logro of logros(); track logro.id) {
+            <div class="logro-card" [class.unlocked]="logro.desbloqueado">
+              <div class="logro-icon-wrapper" [class.unlocked]="logro.desbloqueado">
+                <i class="bi" [class]="logro.icono"></i>
+              </div>
+              <div class="logro-content">
+                <div class="logro-header-row">
+                  <h4>{{ logro.titulo }}</h4>
+                  <span class="logro-badge" [class.badge-unlocked]="logro.desbloqueado">
+                    {{ logro.desbloqueado ? 'Desbloqueado' : 'En progreso' }}
+                  </span>
+                </div>
+                <p class="logro-desc">{{ logro.descripcion }}</p>
+                <div class="logro-progress-bar">
+                  <div class="logro-progress-fill" [style.width.%]="logro.progreso"></div>
+                </div>
+                <span class="logro-progress-text">{{ logro.progresoTexto }}</span>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="mostrarModalLogros.set(false)">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Filtros y Búsqueda -->
   <section class="card filtros-card">
     <div class="filtros-header">
       <div class="filtros-title">
         <i class="bi bi-funnel-fill"></i>
-        <h2>Filtros</h2>
+        <h2>Filtros y Búsqueda</h2>
       </div>
-      @if (filtroTipo() || filtroFechaDesde() || filtroFechaHasta()) {
+      @if (filtroTipo() || filtroFechaDesde() || filtroFechaHasta() || filtroTexto()) {
         <button class="btn-clear" (click)="limpiarFiltros()">
           <i class="bi bi-x-circle"></i> Limpiar filtros
         </button>
       }
     </div>
     <div class="filtros-grid">
+      <!-- Buscador de texto -->
+      <div class="field-group full-width-sm">
+        <label for="filtro-texto">Buscar por palabra clave</label>
+        <div class="search-input-wrapper">
+          <i class="bi bi-search search-icon"></i>
+          <input
+            id="filtro-texto"
+            type="text"
+            class="input-field search-input"
+            placeholder="Buscar en notas o disciplina..."
+            [value]="filtroTexto()"
+            (input)="onFiltroTextoChange($event)"
+          />
+        </div>
+      </div>
+
       <div class="field-group">
         <label for="filtro-tipo">Tipo de actividad</label>
         <select id="filtro-tipo" class="input-field" [value]="filtroTipo()" (change)="onFiltroTipoChange($event)">
@@ -179,10 +253,12 @@
           }
         </select>
       </div>
+
       <div class="field-group">
         <label for="filtro-desde">Desde</label>
         <input id="filtro-desde" type="date" class="input-field" [value]="filtroFechaDesde()" (change)="onFiltroDesdeChange($event)" />
       </div>
+
       <div class="field-group">
         <label for="filtro-hasta">Hasta</label>
         <input id="filtro-hasta" type="date" class="input-field" [value]="filtroFechaHasta()" (change)="onFiltroHastaChange($event)" />
@@ -200,10 +276,15 @@
     } @else if (sesionesFiltradasComputed().length === 0) {
       <div class="empty-state">
         <i class="bi bi-inbox empty-icon"></i>
-        <p>No hay sesiones registradas aún.</p>
-        <button class="btn-primary" (click)="abrirFormularioNuevo()">
-          <i class="bi bi-plus-lg"></i> Registrar primera sesión
-        </button>
+        <p>No hay sesiones registradas que coincidan con la búsqueda.</p>
+        <div class="empty-actions">
+          <button class="btn-primary" (click)="abrirFormularioNuevo()">
+            <i class="bi bi-plus-lg"></i> Registrar primera sesión
+          </button>
+          <a routerLink="/metas" class="btn-outline">
+            <i class="bi bi-bullseye"></i> Ver mi meta
+          </a>
+        </div>
       </div>
     } @else {
       <div class="sessions-grid">
