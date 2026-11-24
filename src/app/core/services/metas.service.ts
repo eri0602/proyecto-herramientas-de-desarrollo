@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { SupabaseService } from './supabase.service';
+import { DemoDataService } from './demo-data.service';
 import { Meta } from '../models/meta.model';
 
 const STORAGE_KEY = 'resiste_metas';
@@ -9,6 +10,7 @@ const STORAGE_KEY = 'resiste_metas';
 })
 export class MetasService {
   private supabase = inject(SupabaseService).supabase;
+  private demoData = inject(DemoDataService);
 
   private getLocalMetas(): Meta[] {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -38,7 +40,13 @@ export class MetasService {
 
   private getLocalMeta(usuarioId: string): Meta | null {
     const metas = this.getLocalMetas();
-    return metas.find(m => m.usuario_id === usuarioId) || null;
+    const encontrada = metas.find(m => m.usuario_id === usuarioId || m.usuario_id === 'demo-user');
+    if (encontrada) return encontrada;
+
+    // Precargar meta de prueba realista si está vacío
+    const demo = this.demoData.getDemoMeta(usuarioId);
+    this.saveLocalMetas([demo]);
+    return demo;
   }
 
   async createMeta(meta: Omit<Meta, 'id'>): Promise<Meta> {
@@ -84,5 +92,14 @@ export class MetasService {
       }
       throw new Error('Meta no encontrada');
     }
+  }
+
+  /**
+   * Restablece la meta con los datos de prueba
+   */
+  restaurarDemo(usuarioId = 'demo-user'): Meta {
+    const demo = this.demoData.getDemoMeta(usuarioId);
+    this.saveLocalMetas([demo]);
+    return demo;
   }
 }
